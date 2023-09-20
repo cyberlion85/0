@@ -18,7 +18,7 @@
     <button @click="isPlaying = false">Stop</button>
     <button @click="isPrevFrame = true">Step Backward</button>
     <button @click="isNextFrame = true">Step Forward</button>
-    <div>Текущее время: 111</div>
+    <!-- <div>Текущее время: 111</div> -->
     <div>Текущий кадр: {{ currentFrame }}</div>
   </div>
 </template>

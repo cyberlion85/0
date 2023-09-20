@@ -14,7 +14,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, withDefaults, defineProps, watch, defineEmits } from "vue";
+import {
+  ref,
+  withDefaults,
+  defineProps,
+  watch,
+  defineEmits,
+  onMounted,
+} from "vue";
 
 const props = withDefaults(
   defineProps<{
@@ -32,10 +39,25 @@ const currentFrame = ref<number>(1);
 const FPS = 12;
 
 let frameDuration = 1 / FPS;
+let previousTime = 0;
 
-// const handle = (evt: any) => {
-//   // console.log(evt);
-// };
+const loop = () => {
+  if (videoRef.value && props.playing) {
+    console.log(videoRef.value);
+
+    const videoElem = videoRef.value;
+    if (videoElem.currentTime !== previousTime) {
+      currentFrame.value = Math.floor(videoElem.currentTime * FPS) + 1;
+      emits("current-frame", currentFrame.value);
+      previousTime = videoElem.currentTime;
+    }
+  }
+  requestAnimationFrame(loop);
+};
+
+onMounted(() => {
+  requestAnimationFrame(loop);
+});
 
 watch(
   () => props.playing,

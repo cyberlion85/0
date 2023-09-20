@@ -34,7 +34,7 @@
 import { ref, onMounted } from "vue";
 
 const canvasRef = ref<HTMLCanvasElement | null>(null);
-const selectedWidth = ref(13);
+const selectedWidth = ref(8);
 const selectedColor = ref("blue");
 let context: CanvasRenderingContext2D | null = null;
 let isDrawing = false;
