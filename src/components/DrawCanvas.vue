@@ -1,24 +1,22 @@
 <template>
   <div id="canvas_div" style="overflow-x: auto">
+    <!--  -->
     <canvas
       ref="canvasRef"
-      width="900"
-      height="360"
+      class="canvas"
+      width="1920"
+      height="1080"
       @mousedown="handleMouseDown"
       @mousemove="handleMouseMove"
       @mouseup="handleMouseUp"
-      @touchstart="handleStart"
-      @touchmove="handleMove"
-      @touchend="handleEnd"
-      @touchcancel="handleCancel"
     ></canvas>
-    <button @click="clearArea">Clear Area</button>
+    <!-- <button @click="clearArea">Clear Area</button>
     Line width:
     <select v-model="selectedWidth">
-      <option value="2">2</option>
-      <option value="11">11</option>
-      <option value="13">13</option>
-      <option value="15">15</option>
+      <option :value="3">3</option>
+      <option :value="5">5</option>
+      <option :value="7">7</option>
+      <option :value="9">9</option>
     </select>
     Color:
     <select v-model="selectedColor">
@@ -28,7 +26,7 @@
       <option value="green">green</option>
       <option value="yellow">yellow</option>
       <option value="gray">gray</option>
-    </select>
+    </select> -->
   </div>
 </template>
 
@@ -36,41 +34,36 @@
 import { ref, onMounted } from "vue";
 
 const canvasRef = ref<HTMLCanvasElement | null>(null);
-const selectedWidth = ref("13");
+const selectedWidth = ref(13);
 const selectedColor = ref("blue");
-const ongoingTouches = ref<any[]>([]);
-let context = null;
+let context: CanvasRenderingContext2D | null = null;
 let isDrawing = false;
 let x = 0;
 let y = 0;
-let offsetX = 0;
-let offsetY = 0;
 
 onMounted(() => {
   if (canvasRef.value) {
     context = canvasRef.value.getContext("2d");
-    const rect = canvasRef.value.getBoundingClientRect();
-    offsetX = rect.left;
-    offsetY = rect.top;
+    // const rect = canvasRef.value.getBoundingClientRect();
   }
 });
 
-function handleMouseDown(e) {
+function handleMouseDown(e: MouseEvent) {
   x = e.offsetX;
   y = e.offsetY;
   isDrawing = true;
 }
 
-function handleMouseMove(e) {
-  if (isDrawing) {
+function handleMouseMove(e: MouseEvent) {
+  if (isDrawing && context) {
     drawLine(context, x, y, e.offsetX, e.offsetY);
     x = e.offsetX;
     y = e.offsetY;
   }
 }
 
-function handleMouseUp(e) {
-  if (isDrawing) {
+function handleMouseUp(e: MouseEvent) {
+  if (isDrawing && context) {
     drawLine(context, x, y, e.offsetX, e.offsetY);
     x = 0;
     y = 0;
@@ -78,10 +71,15 @@ function handleMouseUp(e) {
   }
 }
 
-// ... остальные функции по аналогии с вашим кодом ...
-
-function drawLine(context, x1, y1, x2, y2) {
+function drawLine(
+  context: CanvasRenderingContext2D,
+  x1: number,
+  y1: number,
+  x2: number,
+  y2: number
+) {
   context.beginPath();
+  context.imageSmoothingEnabled = false;
   context.strokeStyle = selectedColor.value;
   context.lineWidth = selectedWidth.value;
   context.lineJoin = "round";
@@ -107,6 +105,11 @@ function clearArea() {
   margin-right: auto;
 }
 canvas {
-  border: 2px solid black;
+  /* border: 3px solid rgb(255, 0, 0); */
+}
+.canvas {
+  /* width: 1920;
+  height: 1080; */
+  padding: 0px;
 }
 </style>
