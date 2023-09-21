@@ -3,31 +3,14 @@
     <canvas
       ref="canvasRef"
       class="canvas"
-      width="2732"
-      height="1536"
+      width="1366"
+      height="768"
       @mousedown="handleMouseDown"
       @mousemove="handleMouseMove"
       @mouseup="handleMouseUp"
     ></canvas>
     <button style="border: 1px solid blue" @click="saveToBase64">Save</button>
     <button style="border: 1px solid blue" @click="loadFromBase64">Load</button>
-    <!-- <button @click="clearArea">Clear Area</button>
-    Line width:
-    <select v-model="selectedWidth">
-      <option :value="3">3</option>
-      <option :value="5">5</option>
-      <option :value="7">7</option>
-      <option :value="9">9</option>
-    </select>
-    Color:
-    <select v-model="selectedColor">
-      <option value="black">black</option>
-      <option value="blue">blue</option>
-      <option value="red">red</option>
-      <option value="green">green</option>
-      <option value="yellow">yellow</option>
-      <option value="gray">gray</option>
-    </select> -->
   </div>
 </template>
 
@@ -35,89 +18,78 @@
 import { ref, onMounted } from "vue";
 
 const canvasRef = ref<HTMLCanvasElement | null>(null);
-const selectedWidth = ref(16);
+const selectedWidth = ref(6);
 const selectedColor = ref("blue");
 let context: CanvasRenderingContext2D | null = null;
 let isDrawing = false;
-let x = 0;
-let y = 0;
+let x: number | null = null;
+let y: number | null = null;
 let savedImageData = "";
+let lastTime = Date.now();
+
+let smoothLineWidth = 1; // Инициализация сглаженной толщины
+const smoothingFactor = 0.05; // Фактор сглаживания, значение от 0 до 1
 
 onMounted(() => {
   if (canvasRef.value) {
     context = canvasRef.value.getContext("2d");
-    // const rect = canvasRef.value.getBoundingClientRect();
   }
 });
 
-function handleMouseDown(e: MouseEvent) {
-  const rect = canvasRef.value?.getBoundingClientRect();
-  const scaleX = canvasRef.value?.width / rect?.width;
-  const scaleY = canvasRef.value?.height / rect?.height;
-  x = e.offsetX * scaleX!;
-  y = e.offsetY * scaleY!;
+const handleMouseDown: (e: MouseEvent) => void = (e) => {
+  x = e.offsetX;
+  y = e.offsetY;
   isDrawing = true;
-}
+};
 
-function handleMouseMove(e: MouseEvent) {
-  const rect = canvasRef.value?.getBoundingClientRect();
-  const scaleX = canvasRef.value?.width / rect?.width;
-  const scaleY = canvasRef.value?.height / rect?.height;
-  const mouseX = e.offsetX * scaleX;
-  const mouseY = e.offsetY * scaleY;
+const handleMouseMove: (e: MouseEvent) => void = (e) => {
+  if (isDrawing) {
+    const currentTime = Date.now();
+    const deltaTime = currentTime - lastTime;
 
-  if (isDrawing && context) {
-    drawLine(context, x, y, mouseX, mouseY);
-    x = mouseX;
-    y = mouseY;
+    if (deltaTime === 0 || x === null || y === null) return;
+
+    const dx = e.offsetX - x;
+    const dy = e.offsetY - y;
+
+    const speed = Math.sqrt(dx * dx + dy * dy) / deltaTime;
+
+    const targetLineWidth = Math.min(20, Math.max(2, speed * 2));
+    // console.log(targetLineWidth);
+
+    // Применяем экспоненциальное сглаживание
+    smoothLineWidth += (targetLineWidth - smoothLineWidth) * smoothingFactor;
+
+    if (isDrawing && context) {
+      selectedWidth.value = smoothLineWidth;
+      drawLine(context, x, y, e.offsetX, e.offsetY);
+      x = e.offsetX;
+      y = e.offsetY;
+    }
+
+    lastTime = currentTime;
+    if (isDrawing) {
+      lastTime = currentTime;
+    }
   }
-}
+};
 
-function handleMouseUp(e: MouseEvent) {
-  const rect = canvasRef.value?.getBoundingClientRect();
-  const scaleX = canvasRef.value?.width / rect?.width;
-  const scaleY = canvasRef.value?.height / rect?.height;
-  const mouseX = e.offsetX * scaleX;
-  const mouseY = e.offsetY * scaleY;
+const handleMouseUp: (e: MouseEvent) => void = (e) => {
+  // if (isDrawing && context) {
+  // drawLine(context, x, y, e.offsetX, e.offsetY);
+  // }
+  isDrawing = false;
+  // x = null;
+  // y = null;
+};
 
-  if (isDrawing && context) {
-    drawLine(context, x, y, mouseX, mouseY);
-    x = 0;
-    y = 0;
-    isDrawing = false;
-  }
-}
-
-// function handleMouseDown(e: MouseEvent) {
-//   x = e.offsetX;
-//   y = e.offsetY;
-//   isDrawing = true;
-// }
-
-// function handleMouseMove(e: MouseEvent) {
-//   if (isDrawing && context) {
-//     drawLine(context, x, y, e.offsetX, e.offsetY);
-//     x = e.offsetX;
-//     y = e.offsetY;
-//   }
-// }
-
-// function handleMouseUp(e: MouseEvent) {
-//   if (isDrawing && context) {
-//     drawLine(context, x, y, e.offsetX, e.offsetY);
-//     x = 0;
-//     y = 0;
-//     isDrawing = false;
-//   }
-// }
-
-function drawLine(
+const drawLine: (
   context: CanvasRenderingContext2D,
   x1: number,
   y1: number,
   x2: number,
   y2: number
-) {
+) => void = (context, x1, y1, x2, y2) => {
   context.beginPath();
   context.imageSmoothingEnabled = false;
   context.strokeStyle = selectedColor.value;
@@ -127,40 +99,38 @@ function drawLine(
   context.lineTo(x2, y2);
   context.closePath();
   context.stroke();
-}
+};
 
-function clearArea() {
+const clearArea: () => void = () => {
   if (context) {
     context.setTransform(1, 0, 0, 1, 0, 0);
     context.clearRect(0, 0, context.canvas.width, context.canvas.height);
   }
-}
+};
 
-const saveToBase64 = () => {
+const saveToBase64: () => void = () => {
   if (!canvasRef.value) return;
-
-  const dataURL = canvasRef.value.toDataURL("image/png"); // получаем данные в формате Base64
-  savedImageData = dataURL; // сохраняем данные во временной переменной
+  const dataURL = canvasRef.value.toDataURL("image/png");
+  savedImageData = dataURL;
   console.log("Image saved to temporary variable");
 };
-const loadFromBase64 = () => {
+
+const loadFromBase64: () => void = () => {
   if (!canvasRef.value || !context || !savedImageData) return;
-
-  clearArea(); // стираем то, что было на холсте
-
+  clearArea();
   const img = new Image();
   img.onload = () => {
     if (context) {
-      context.drawImage(img, 0, 0); // рисуем изображение на холсте
+      context.drawImage(img, 0, 0);
     }
   };
-  img.src = savedImageData; // устанавливаем источник изображения из временной переменной
+  img.src = savedImageData;
 };
 </script>
 
 <style scoped>
-.canvas {
+/* .canvas {
   width: 1366px;
   height: 768px;
-}
+} */
 </style>
