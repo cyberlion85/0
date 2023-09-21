@@ -38,8 +38,8 @@ let isPrevFrame = ref(false);
 <style scoped>
 .video-draw-container {
   position: relative;
-  width: 1920px;
-  height: 1080px;
+  width: 1366px;
+  height: 768px;
   overflow: hidden;
 }
 

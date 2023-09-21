@@ -3,12 +3,12 @@
     <!-- @seeked="handle" -->
 
     <video
+      class="video"
       ref="videoRef"
       :src="src"
       @loadedmetadata="handleMetadataLoaded"
       @timeupdate="handleTimeUpdate"
       :controls="false"
-      width="1920"
     ></video>
   </div>
 </template>
@@ -150,5 +150,8 @@ const stepBackward = () => {
 </script>
 
 <style scoped>
-/* Здесь можно добавить стили для компонента */
+.video {
+  width: 100%;
+  height: 100%;
+}
 </style>

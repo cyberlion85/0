@@ -1,11 +1,10 @@
 <template>
   <div id="canvas_div" style="overflow-x: auto">
-    <!--  -->
     <canvas
       ref="canvasRef"
       class="canvas"
-      width="1920"
-      height="980"
+      width="2732"
+      height="1536"
       @mousedown="handleMouseDown"
       @mousemove="handleMouseMove"
       @mouseup="handleMouseUp"
@@ -36,7 +35,7 @@
 import { ref, onMounted } from "vue";
 
 const canvasRef = ref<HTMLCanvasElement | null>(null);
-const selectedWidth = ref(8);
+const selectedWidth = ref(16);
 const selectedColor = ref("blue");
 let context: CanvasRenderingContext2D | null = null;
 let isDrawing = false;
@@ -52,27 +51,65 @@ onMounted(() => {
 });
 
 function handleMouseDown(e: MouseEvent) {
-  x = e.offsetX;
-  y = e.offsetY;
+  const rect = canvasRef.value?.getBoundingClientRect();
+  const scaleX = canvasRef.value?.width / rect?.width;
+  const scaleY = canvasRef.value?.height / rect?.height;
+  x = e.offsetX * scaleX!;
+  y = e.offsetY * scaleY!;
   isDrawing = true;
 }
 
 function handleMouseMove(e: MouseEvent) {
+  const rect = canvasRef.value?.getBoundingClientRect();
+  const scaleX = canvasRef.value?.width / rect?.width;
+  const scaleY = canvasRef.value?.height / rect?.height;
+  const mouseX = e.offsetX * scaleX;
+  const mouseY = e.offsetY * scaleY;
+
   if (isDrawing && context) {
-    drawLine(context, x, y, e.offsetX, e.offsetY);
-    x = e.offsetX;
-    y = e.offsetY;
+    drawLine(context, x, y, mouseX, mouseY);
+    x = mouseX;
+    y = mouseY;
   }
 }
 
 function handleMouseUp(e: MouseEvent) {
+  const rect = canvasRef.value?.getBoundingClientRect();
+  const scaleX = canvasRef.value?.width / rect?.width;
+  const scaleY = canvasRef.value?.height / rect?.height;
+  const mouseX = e.offsetX * scaleX;
+  const mouseY = e.offsetY * scaleY;
+
   if (isDrawing && context) {
-    drawLine(context, x, y, e.offsetX, e.offsetY);
+    drawLine(context, x, y, mouseX, mouseY);
     x = 0;
     y = 0;
     isDrawing = false;
   }
 }
+
+// function handleMouseDown(e: MouseEvent) {
+//   x = e.offsetX;
+//   y = e.offsetY;
+//   isDrawing = true;
+// }
+
+// function handleMouseMove(e: MouseEvent) {
+//   if (isDrawing && context) {
+//     drawLine(context, x, y, e.offsetX, e.offsetY);
+//     x = e.offsetX;
+//     y = e.offsetY;
+//   }
+// }
+
+// function handleMouseUp(e: MouseEvent) {
+//   if (isDrawing && context) {
+//     drawLine(context, x, y, e.offsetX, e.offsetY);
+//     x = 0;
+//     y = 0;
+//     isDrawing = false;
+//   }
+// }
 
 function drawLine(
   context: CanvasRenderingContext2D,
@@ -121,4 +158,9 @@ const loadFromBase64 = () => {
 };
 </script>
 
-<style scoped></style>
+<style scoped>
+.canvas {
+  width: 1366px;
+  height: 768px;
+}
+</style>
