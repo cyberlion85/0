@@ -5,11 +5,13 @@
       ref="canvasRef"
       class="canvas"
       width="1920"
-      height="1080"
+      height="980"
       @mousedown="handleMouseDown"
       @mousemove="handleMouseMove"
       @mouseup="handleMouseUp"
     ></canvas>
+    <button style="border: 1px solid blue" @click="saveToBase64">Save</button>
+    <button style="border: 1px solid blue" @click="loadFromBase64">Load</button>
     <!-- <button @click="clearArea">Clear Area</button>
     Line width:
     <select v-model="selectedWidth">
@@ -40,6 +42,7 @@ let context: CanvasRenderingContext2D | null = null;
 let isDrawing = false;
 let x = 0;
 let y = 0;
+let savedImageData = "";
 
 onMounted(() => {
   if (canvasRef.value) {
@@ -95,21 +98,27 @@ function clearArea() {
     context.clearRect(0, 0, context.canvas.width, context.canvas.height);
   }
 }
+
+const saveToBase64 = () => {
+  if (!canvasRef.value) return;
+
+  const dataURL = canvasRef.value.toDataURL("image/png"); // получаем данные в формате Base64
+  savedImageData = dataURL; // сохраняем данные во временной переменной
+  console.log("Image saved to temporary variable");
+};
+const loadFromBase64 = () => {
+  if (!canvasRef.value || !context || !savedImageData) return;
+
+  clearArea(); // стираем то, что было на холсте
+
+  const img = new Image();
+  img.onload = () => {
+    if (context) {
+      context.drawImage(img, 0, 0); // рисуем изображение на холсте
+    }
+  };
+  img.src = savedImageData; // устанавливаем источник изображения из временной переменной
+};
 </script>
 
-<style scoped>
-#canvas_div {
-  text-align: center;
-  display: block;
-  margin-left: auto;
-  margin-right: auto;
-}
-canvas {
-  /* border: 3px solid rgb(255, 0, 0); */
-}
-.canvas {
-  /* width: 1920;
-  height: 1080; */
-  padding: 0px;
-}
-</style>
+<style scoped></style>

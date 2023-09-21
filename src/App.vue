@@ -1,30 +1,14 @@
 <template>
-  <!-- <div class="video-draw-container">
-    <VideoPlayer class="player" src="/12.mov" />
-    <DrawCanvas class="canvas" />
-  </div>
-  <div class="controls">
-    <button>Step Backward</button>
-    <button>Step Forward</button>
-    <div>Текущее время: 111</div>
-    <div>Текущий кадр:222</div>
-  </div> -->
   <SketchEditor />
 </template>
 
 <script lang="ts">
 import { defineComponent } from "vue";
 import SketchEditor from "./components/SketchEditor.vue";
-// import VideoPlayer from "./components/VideoPlayer.vue";
-// import DrawCanvas from "./components/DrawCanvas.vue";
 
 export default defineComponent({
   name: "App",
   components: {
-    // eslint-disable-next-line vue/no-unused-components
-    // VideoPlayer,
-    // eslint-disable-next-line vue/no-unused-components
-    // DrawCanvas,
     SketchEditor,
   },
 });
