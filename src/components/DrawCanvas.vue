@@ -9,13 +9,25 @@
       @mousemove="handleMouseMove"
       @mouseup="handleMouseUp"
     ></canvas>
-    <!-- <button style="border: 1px solid blue" @click="saveToBase64">Save</button>
-    <button style="border: 1px solid blue" @click="loadFromBase64">Load</button> -->
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, defineExpose } from "vue";
+import {
+  ref,
+  onMounted,
+  defineExpose,
+  withDefaults,
+  defineProps,
+  watch,
+} from "vue";
+
+const props = withDefaults(
+  defineProps<{
+    currentFrame: number;
+  }>(),
+  { currentFrame: 0 }
+);
 
 const canvasRef = ref<HTMLCanvasElement | null>(null);
 const selectedWidth = ref(6);
@@ -35,6 +47,12 @@ onMounted(() => {
     context = canvasRef.value.getContext("2d");
   }
 });
+watch(
+  () => props.currentFrame,
+  (newFrame) => {
+    // console.log("newFrame");
+  }
+);
 
 const handleMouseDown: (e: MouseEvent) => void = (e) => {
   x = e.offsetX;

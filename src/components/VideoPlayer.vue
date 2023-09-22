@@ -88,13 +88,6 @@ watch(
     }
   }
 );
-// watch(
-//   () => currentFrame.value,
-//   (newFrame) => {
-//     // console.log("change", newFrame);
-//     // emits("current-frame", newFrame);
-//   }
-// );
 
 const handleMetadataLoaded = () => {
   if (videoRef.value) {
@@ -102,7 +95,7 @@ const handleMetadataLoaded = () => {
   }
 };
 
-const handleTimeUpdate = (payload) => {
+const handleTimeUpdate = () => {
   // console.log(payload);
   // console.log(Math.floor(videoRef.value.currentTime * FPS) + 1);
 

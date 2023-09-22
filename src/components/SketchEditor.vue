@@ -10,7 +10,7 @@
       class="player"
       src="/12.mov"
     />
-    <DrawCanvas ref="canvasRef" class="canvas" />
+    <DrawCanvas :currentFrame="currentFrame" ref="canvasRef" class="canvas" />
   </div>
   <br />
   <div class="controls">
