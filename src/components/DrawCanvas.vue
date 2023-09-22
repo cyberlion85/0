@@ -9,13 +9,13 @@
       @mousemove="handleMouseMove"
       @mouseup="handleMouseUp"
     ></canvas>
-    <button style="border: 1px solid blue" @click="saveToBase64">Save</button>
-    <button style="border: 1px solid blue" @click="loadFromBase64">Load</button>
+    <!-- <button style="border: 1px solid blue" @click="saveToBase64">Save</button>
+    <button style="border: 1px solid blue" @click="loadFromBase64">Load</button> -->
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { ref, onMounted, defineExpose } from "vue";
 
 const canvasRef = ref<HTMLCanvasElement | null>(null);
 const selectedWidth = ref(6);
@@ -126,6 +126,10 @@ const loadFromBase64: () => void = () => {
   };
   img.src = savedImageData;
 };
+defineExpose({
+  saveToBase64,
+  loadFromBase64,
+});
 </script>
 
 <style scoped>

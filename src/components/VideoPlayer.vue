@@ -36,14 +36,14 @@ const props = withDefaults(
 const videoRef = ref();
 const emits = defineEmits(["frame-stepped", "current-frame"]);
 const currentFrame = ref<number>(1);
-const FPS = 12;
+const FPS = 24;
 
 let frameDuration = 1 / FPS;
 let previousTime = 0;
 
 const loop = () => {
   if (videoRef.value && props.playing) {
-    console.log(videoRef.value);
+    // console.log(videoRef.value);
 
     const videoElem = videoRef.value;
     if (videoElem.currentTime !== previousTime) {
@@ -88,13 +88,13 @@ watch(
     }
   }
 );
-watch(
-  () => currentFrame.value,
-  (newFrame) => {
-    // console.log("change", newFrame);
-    // emits("current-frame", newFrame);
-  }
-);
+// watch(
+//   () => currentFrame.value,
+//   (newFrame) => {
+//     // console.log("change", newFrame);
+//     // emits("current-frame", newFrame);
+//   }
+// );
 
 const handleMetadataLoaded = () => {
   if (videoRef.value) {

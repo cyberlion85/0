@@ -10,7 +10,7 @@
       class="player"
       src="/12.mov"
     />
-    <DrawCanvas class="canvas" />
+    <DrawCanvas ref="canvasRef" class="canvas" />
   </div>
   <br />
   <div class="controls">
@@ -18,6 +18,8 @@
     <button @click="isPlaying = false">Stop</button>
     <button @click="isPrevFrame = true">Step Backward</button>
     <button @click="isNextFrame = true">Step Forward</button>
+    <button style="border: 1px solid blue" @click="save">Save</button>
+    <button style="border: 1px solid blue" @click="load">Load</button>
     <!-- <div>Текущее время: 111</div> -->
     <div>Текущий кадр: {{ currentFrame }}</div>
   </div>
@@ -29,10 +31,24 @@ import VideoPlayer from "./VideoPlayer.vue";
 import DrawCanvas from "./DrawCanvas.vue";
 
 const videoPlayerRef = ref(null);
+interface CanvasComponentMethods {
+  saveToBase64: () => void;
+  loadFromBase64: () => void;
+}
+
+const canvasRef = ref<CanvasComponentMethods | null>(null);
+
 const isPlaying = ref(false);
 let currentFrame = ref(0);
 let isNextFrame = ref(false);
 let isPrevFrame = ref(false);
+
+const save = () => {
+  canvasRef.value?.saveToBase64();
+};
+const load = () => {
+  canvasRef.value?.loadFromBase64();
+};
 </script>
 
 <style scoped>
