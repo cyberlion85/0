@@ -10,7 +10,12 @@
       class="player"
       src="/12.mov"
     />
-    <DrawCanvas :currentFrame="currentFrame" ref="canvasRef" class="canvas" />
+    <DrawCanvas
+      @update:frame-to-image-data="(data) => (framesWithSketch = data)"
+      :currentFrame="currentFrame"
+      ref="canvasRef"
+      class="canvas"
+    />
   </div>
   <br />
   <div class="controls">
@@ -18,17 +23,23 @@
     <button @click="isPlaying = false">Stop</button>
     <button @click="isPrevFrame = true">Step Backward</button>
     <button @click="isNextFrame = true">Step Forward</button>
-    <button style="border: 1px solid blue" @click="save">Save</button>
-    <button style="border: 1px solid blue" @click="load">Load</button>
+    <!-- <button style="border: 1px solid blue" @click="save">Save</button> -->
+    <!-- <button style="border: 1px solid blue" @click="load">Load</button> -->
     <!-- <div>Текущее время: 111</div> -->
     <div>Текущий кадр: {{ currentFrame }}</div>
   </div>
+  <TimeLine
+    :framesWithSketch="framesWithSketch"
+    :playingFrame="currentFrame"
+    :totalFrames="500"
+  />
 </template>
 
 <script setup lang="ts">
 import { ref } from "vue";
 import VideoPlayer from "./VideoPlayer.vue";
 import DrawCanvas from "./DrawCanvas.vue";
+import TimeLine from "./TimeLine.vue";
 
 const videoPlayerRef = ref(null);
 interface CanvasComponentMethods {
@@ -42,6 +53,7 @@ const isPlaying = ref(false);
 let currentFrame = ref(0);
 let isNextFrame = ref(false);
 let isPrevFrame = ref(false);
+let framesWithSketch = ref([]);
 
 const save = () => {
   canvasRef.value?.saveToBase64();
@@ -74,6 +86,6 @@ const load = () => {
   z-index: 2;
 }
 .controls {
-  border: 1px solid red;
+  /* border: 1px solid red; */
 }
 </style>

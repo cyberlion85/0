@@ -20,6 +20,7 @@ import {
   withDefaults,
   defineProps,
   watch,
+  defineEmits,
 } from "vue";
 
 const props = withDefaults(
@@ -29,6 +30,8 @@ const props = withDefaults(
   { currentFrame: 0 }
 );
 
+const emits = defineEmits(["update:frameToImageData"]);
+
 const canvasRef = ref<HTMLCanvasElement | null>(null);
 const selectedWidth = ref(6);
 const selectedColor = ref("blue");
@@ -36,7 +39,7 @@ let context: CanvasRenderingContext2D | null = null;
 let isDrawing = false;
 let x: number | null = null;
 let y: number | null = null;
-let savedImageData = "";
+const frameToImageData: Record<number, string> = {};
 let lastTime = Date.now();
 
 let smoothLineWidth = 1; // Инициализация сглаженной толщины
@@ -49,8 +52,9 @@ onMounted(() => {
 });
 watch(
   () => props.currentFrame,
-  (newFrame) => {
-    // console.log("newFrame");
+  () => {
+    // Вызовите loadFromBase64 каждый раз, когда меняется currentFrame
+    loadFromBase64();
   }
 );
 
@@ -93,12 +97,8 @@ const handleMouseMove: (e: MouseEvent) => void = (e) => {
 };
 
 const handleMouseUp: (e: MouseEvent) => void = (e) => {
-  // if (isDrawing && context) {
-  // drawLine(context, x, y, e.offsetX, e.offsetY);
-  // }
   isDrawing = false;
-  // x = null;
-  // y = null;
+  saveToBase64();
 };
 
 const drawLine: (
@@ -129,20 +129,28 @@ const clearArea: () => void = () => {
 const saveToBase64: () => void = () => {
   if (!canvasRef.value) return;
   const dataURL = canvasRef.value.toDataURL("image/png");
-  savedImageData = dataURL;
-  console.log("Image saved to temporary variable");
+  frameToImageData[props.currentFrame] = dataURL;
+  emits("update:frameToImageData", Object.keys(frameToImageData).map(Number));
+  console.log(
+    `Image for frame ${props.currentFrame} saved to temporary variable`
+  );
 };
 
 const loadFromBase64: () => void = () => {
-  if (!canvasRef.value || !context || !savedImageData) return;
+  if (!context) return;
   clearArea();
-  const img = new Image();
-  img.onload = () => {
-    if (context) {
-      context.drawImage(img, 0, 0);
-    }
-  };
-  img.src = savedImageData;
+  const imgData = frameToImageData[props.currentFrame];
+  if (imgData) {
+    const img = new Image();
+    img.onload = () => {
+      if (context) {
+        context.drawImage(img, 0, 0);
+      }
+    };
+    img.src = imgData;
+  } else {
+    // console.log(`No image data for frame ${props.currentFrame}`);
+  }
 };
 defineExpose({
   saveToBase64,
@@ -150,9 +158,4 @@ defineExpose({
 });
 </script>
 
-<style scoped>
-/* .canvas {
-  width: 1366px;
-  height: 768px;
-} */
-</style>
+<style scoped></style>
