@@ -1,17 +1,11 @@
 <template>
-  <SketchEditor />
+  <!-- <SketchEditor /> -->
+  <draggableElement />
 </template>
 
-<script lang="ts">
-import { defineComponent } from "vue";
+<script setup lang="ts">
 import SketchEditor from "./components/SketchEditor.vue";
-
-export default defineComponent({
-  name: "App",
-  components: {
-    SketchEditor,
-  },
-});
+import draggableElement from "./components/draggableElement.vue";
 </script>
 
 <style scoped>

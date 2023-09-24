@@ -5,9 +5,9 @@
       class="canvas"
       width="1366"
       height="768"
-      @mousedown="handleMouseDown"
+      @mousedown.left="handleMouseDown"
       @mousemove="handleMouseMove"
-      @mouseup="handleMouseUp"
+      @mouseup.left="handleMouseUp"
     ></canvas>
   </div>
 </template>
