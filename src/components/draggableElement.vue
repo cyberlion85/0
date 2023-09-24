@@ -5,18 +5,14 @@
     @mouseup.right="handleMouseUp"
     @contextmenu.prevent
   >
-    <!-- <SketchEditor
-      class="box"
-      ref="box"
-      @mousedown.right.prevent="handleMouseDown"
-    ></SketchEditor> -->
-    <div class="box" ref="box" @mousedown.right.prevent="handleMouseDown"></div>
+    <div class="box" ref="box" @mousedown.right.prevent="handleMouseDown">
+      <slot></slot>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from "vue";
-import SketchEditor from "./SketchEditor.vue";
 
 const box = ref<HTMLElement | null>(null);
 let isDragging = false;
@@ -26,8 +22,12 @@ let offsetY = 0;
 const handleMouseDown = (e: MouseEvent) => {
   if (e.button === 2 && box.value) {
     isDragging = true;
-    offsetX = e.clientX - (parseInt(box.value.style.left) || 0);
-    offsetY = e.clientY - (parseInt(box.value.style.top) || 0);
+
+    const boxStyle = getComputedStyle(box.value);
+    if (boxStyle) {
+      offsetX = e.clientX - parseInt(boxStyle.left);
+      offsetY = e.clientY - parseInt(boxStyle.top);
+    }
   }
 };
 
@@ -57,9 +57,13 @@ onUnmounted(() => {
 
 <style scoped>
 .container {
-  width: 100vw;
-  height: 100vh;
+  /* width: 1200px; */
+  /* height: 800px; */
+  width: 80vw;
+  height: 80vh;
   position: relative;
+  /* border: 1px solid blue; */
+  margin: auto;
 }
 
 .box {
@@ -69,5 +73,6 @@ onUnmounted(() => {
   position: absolute;
   left: 0;
   top: 0;
+  z-index: 0;
 }
 </style>
