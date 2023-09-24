@@ -3,12 +3,14 @@
     class="container"
     @mousemove="handleMouseMove"
     @mouseup.right="handleMouseUp"
+    @wheel="handleWheel"
     @contextmenu.prevent
   >
     <div
       class="draggable-container"
       ref="draggableContainer"
       @mousedown.right.prevent="handleMouseDown"
+      :style="{ transform: `scale(${scale})` }"
     >
       <slot></slot>
     </div>
@@ -22,6 +24,9 @@ const draggableContainer = ref<HTMLElement | null>(null);
 let isDragging = false;
 let offsetX = 0;
 let offsetY = 0;
+let scale = ref(1); // начальный масштаб
+const minScale = 0.1; // минимальный масштаб
+const maxScale = 8; // максимальный масштаб
 
 const handleMouseDown = (e: MouseEvent) => {
   if (e.button === 2 && draggableContainer.value) {
@@ -44,6 +49,16 @@ const handleMouseMove = (e: MouseEvent) => {
 
 const handleMouseUp = () => {
   isDragging = false;
+};
+
+const handleWheel = (e: WheelEvent) => {
+  e.preventDefault();
+  const delta = e.deltaY > 0 ? 0.9 : 1.1;
+  const newScale = scale.value * delta;
+
+  if (newScale >= minScale && newScale <= maxScale) {
+    scale.value = newScale;
+  }
 };
 
 const handleContextMenu = (e: Event) => {
@@ -72,5 +87,6 @@ onUnmounted(() => {
   left: 0;
   top: 0;
   z-index: 0;
+  transition: transform 0.1s ease;
 }
 </style>
