@@ -5,7 +5,11 @@
     @mouseup.right="handleMouseUp"
     @contextmenu.prevent
   >
-    <div class="box" ref="box" @mousedown.right.prevent="handleMouseDown">
+    <div
+      class="draggable-container"
+      ref="draggableContainer"
+      @mousedown.right.prevent="handleMouseDown"
+    >
       <slot></slot>
     </div>
   </div>
@@ -14,27 +18,27 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from "vue";
 
-const box = ref<HTMLElement | null>(null);
+const draggableContainer = ref<HTMLElement | null>(null);
 let isDragging = false;
 let offsetX = 0;
 let offsetY = 0;
 
 const handleMouseDown = (e: MouseEvent) => {
-  if (e.button === 2 && box.value) {
+  if (e.button === 2 && draggableContainer.value) {
     isDragging = true;
 
-    const boxStyle = getComputedStyle(box.value);
-    if (boxStyle) {
-      offsetX = e.clientX - parseInt(boxStyle.left);
-      offsetY = e.clientY - parseInt(boxStyle.top);
+    const containerStyle = getComputedStyle(draggableContainer.value);
+    if (containerStyle) {
+      offsetX = e.clientX - parseInt(containerStyle.left);
+      offsetY = e.clientY - parseInt(containerStyle.top);
     }
   }
 };
 
 const handleMouseMove = (e: MouseEvent) => {
-  if (isDragging && box.value) {
-    box.value.style.left = e.clientX - offsetX + "px";
-    box.value.style.top = e.clientY - offsetY + "px";
+  if (isDragging && draggableContainer.value) {
+    draggableContainer.value.style.left = e.clientX - offsetX + "px";
+    draggableContainer.value.style.top = e.clientY - offsetY + "px";
   }
 };
 
@@ -57,19 +61,13 @@ onUnmounted(() => {
 
 <style scoped>
 .container {
-  /* width: 1200px; */
-  /* height: 800px; */
   width: 80vw;
   height: 80vh;
   position: relative;
-  /* border: 1px solid blue; */
   margin: auto;
 }
 
-.box {
-  width: 100px;
-  height: 100px;
-  background-color: red;
+.draggable-container {
   position: absolute;
   left: 0;
   top: 0;

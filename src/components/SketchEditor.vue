@@ -21,7 +21,6 @@
         /></div
     ></draggableElement>
 
-    <br />
     <div class="controls">
       <button @click="isPlaying = true">Play</button>
       <button @click="isPlaying = false">Stop</button>
