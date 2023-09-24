@@ -24,7 +24,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, withDefaults, defineProps, watch } from "vue";
+import { ref, withDefaults, defineProps, defineEmits } from "vue";
 
 const props = withDefaults(
   defineProps<{
@@ -35,15 +35,7 @@ const props = withDefaults(
   {}
 );
 
-watch(
-  () => props.framesWithSketch,
-  (frames) => console.log(frames)
-);
-
-// const test = (a: any) => {
-//   console.log(a);
-//   return true;
-// };
+const emits = defineEmits(["selectedFrame"]);
 
 const highlightedFrame = ref(0);
 const selectedFrame = ref(0);
@@ -58,6 +50,7 @@ const unhighlightFrame = () => {
 
 const selectFrame = (frame: number) => {
   selectedFrame.value = frame;
+  emits("selectedFrame", selectedFrame.value);
 };
 </script>
 
@@ -94,7 +87,7 @@ const selectFrame = (frame: number) => {
 }
 
 .frame:hover {
-  background-color: rgb(21, 211, 18);
+  background-color: rgb(205, 255, 203);
 }
 
 .frame-number {
@@ -102,6 +95,6 @@ const selectFrame = (frame: number) => {
   top: -20px;
   left: 50%;
   transform: translateX(-50%);
-  color: red;
+  color: rgb(3, 128, 1);
 }
 </style>

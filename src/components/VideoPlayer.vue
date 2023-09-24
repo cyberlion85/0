@@ -29,6 +29,7 @@ const props = withDefaults(
     playing: boolean;
     nextFrame: boolean;
     prevFrame: boolean;
+    selectedFrame: number | null;
   }>(),
   { playing: false }
 );
@@ -38,7 +39,8 @@ const emits = defineEmits(["frame-stepped", "current-frame"]);
 const currentFrame = ref<number>(1);
 const FPS = 24;
 
-let frameDuration = 1 / FPS;
+// const frameDuration = parseFloat((1 / FPS).toFixed(5));
+const frameDuration = 1 / FPS;
 let previousTime = 0;
 
 const loop = () => {
@@ -89,10 +91,19 @@ watch(
   }
 );
 
-const handleMetadataLoaded = () => {
-  if (videoRef.value) {
-    frameDuration = 1 / videoRef.value.playbackRate / FPS;
+watch(
+  () => props.selectedFrame,
+  (frame) => {
+    if (frame) {
+      setFrame(frame);
+    }
   }
+);
+
+const handleMetadataLoaded = () => {
+  // if (videoRef.value) {
+  //   frameDuration = 1 / videoRef.value.playbackRate / FPS;
+  // }
 };
 
 const handleTimeUpdate = () => {
@@ -110,36 +121,27 @@ const stepForward = () => {
     // тестовый вариант рендера кадра
     requestAnimationFrame(() => {
       if (videoRef.value) {
-        videoRef.value.currentTime += frameDuration;
+        setFrame(currentFrame.value + 1);
         emits("frame-stepped");
-        // emits(
-        //   "current-frame",
-        //   Math.floor(videoRef.value.currentTime * FPS) + 1
-        // );
-        // currentFrame.value = Math.floor(videoRef.value.currentTime * FPS) + 1;
       }
     });
   }
 };
 const stepBackward = () => {
   if (videoRef.value) {
-    videoRef.value.currentTime -= frameDuration;
+    setFrame(currentFrame.value - 1);
     emits("frame-stepped");
-    // emits("current-frame", Math.floor(videoRef.value.currentTime * FPS) + 1);
-    // currentFrame.value = Math.floor(videoRef.value.currentTime * FPS) + 1;
   }
 };
 
 // TODO проверить
-// const setFrame = (frameNumber: number) => {
-//   const frame = currentFrame.value + frameNumber - 1;
-//   if (videoRef.value) {
-//     console.log("setFrame call");
-
-//     const targetTime = frame / FPS; // отнимаем 1, так как у нас кадры начинаются с 1, а не с 0
-//     videoRef.value.currentTime = targetTime;
-//   }
-// };
+const setFrame = (frameNumber: number) => {
+  if (videoRef.value) {
+    const targetTime = frameNumber / FPS;
+    // вычитаем половину длинн фрейма чтобы попасть в центр кадра
+    videoRef.value.currentTime = targetTime - frameDuration / 2;
+  }
+};
 </script>
 
 <style scoped>

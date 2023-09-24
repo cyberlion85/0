@@ -5,10 +5,11 @@
       :next-frame="isNextFrame"
       :prev-frame="isPrevFrame"
       :playing="isPlaying"
+      :selected-frame="selectedFrame"
       @frame-stepped="(isNextFrame = false), (isPrevFrame = false)"
       @current-frame="(frameNum) => (currentFrame = frameNum)"
       class="player"
-      src="/12.mov"
+      src="/24.mov"
     />
     <DrawCanvas
       @update:frame-to-image-data="(data) => (framesWithSketch = data)"
@@ -29,6 +30,7 @@
     <div>Текущий кадр: {{ currentFrame }}</div>
   </div>
   <TimeLine
+    @selected-frame="(frame) => (selectedFrame = frame)"
     :framesWithSketch="framesWithSketch"
     :playingFrame="currentFrame"
     :totalFrames="500"
@@ -42,25 +44,15 @@ import DrawCanvas from "./DrawCanvas.vue";
 import TimeLine from "./TimeLine.vue";
 
 const videoPlayerRef = ref(null);
-interface CanvasComponentMethods {
-  saveToBase64: () => void;
-  loadFromBase64: () => void;
-}
 
-const canvasRef = ref<CanvasComponentMethods | null>(null);
+const canvasRef = ref<null>(null);
 
 const isPlaying = ref(false);
-let currentFrame = ref(0);
-let isNextFrame = ref(false);
-let isPrevFrame = ref(false);
-let framesWithSketch = ref([]);
-
-const save = () => {
-  canvasRef.value?.saveToBase64();
-};
-const load = () => {
-  canvasRef.value?.loadFromBase64();
-};
+const currentFrame = ref(0);
+const isNextFrame = ref(false);
+const isPrevFrame = ref(false);
+const framesWithSketch = ref([]);
+const selectedFrame = ref<number | null>(null);
 </script>
 
 <style scoped>
@@ -69,6 +61,7 @@ const load = () => {
   width: 1366px;
   height: 768px;
   overflow: hidden;
+  margin: auto;
 }
 
 .player,
