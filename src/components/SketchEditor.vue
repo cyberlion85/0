@@ -1,5 +1,7 @@
 <template>
   <div>
+    <button :disabled="!isVector" @click="isVector = false">Raster</button>
+    <button :disabled="isVector" @click="isVector = true">Vector</button>
     <draggableElement
       ><div class="video-draw-container">
         <VideoPlayer
@@ -13,7 +15,15 @@
           class="player"
           src="/24.mov"
         />
+        <DrawVector
+          v-if="isVector"
+          @update:frame-to-image-data="(data) => (framesWithSketch = data)"
+          :currentFrame="currentFrame"
+          ref="canvasRef"
+          class="canvas"
+        />
         <DrawCanvas
+          v-if="!isVector"
           @update:frame-to-image-data="(data) => (framesWithSketch = data)"
           :currentFrame="currentFrame"
           ref="canvasRef"
@@ -42,10 +52,12 @@
 import { ref } from "vue";
 import VideoPlayer from "./VideoPlayer.vue";
 import DrawCanvas from "./DrawCanvas.vue";
+import DrawVector from "./DrawVector.vue";
 import draggableElement from "./draggableElement.vue";
 import TimeLine from "./TimeLine.vue";
 
 const videoPlayerRef = ref(null);
+const isVector = ref(true);
 
 const canvasRef = ref<null>(null);
 
