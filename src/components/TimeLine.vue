@@ -20,7 +20,7 @@
       </div>
     </div>
   </div>
-  {{ highlightedFrame }}
+  highlightedFrame: {{ highlightedFrame }}
 </template>
 
 <script setup lang="ts">

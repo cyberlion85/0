@@ -59,6 +59,7 @@ const loop = () => {
 
 onMounted(() => {
   requestAnimationFrame(loop);
+  emits("current-frame", currentFrame.value);
 });
 
 watch(
@@ -107,11 +108,13 @@ const handleMetadataLoaded = () => {
 };
 
 const handleTimeUpdate = () => {
-  // console.log(payload);
+  console.log("azsd");
   // console.log(Math.floor(videoRef.value.currentTime * FPS) + 1);
 
   if (videoRef.value) {
     currentFrame.value = Math.floor(videoRef.value.currentTime * FPS) + 1;
+    console.log(currentFrame.value);
+
     emits("current-frame", currentFrame.value);
   }
 };

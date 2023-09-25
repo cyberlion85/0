@@ -34,7 +34,7 @@ const emits = defineEmits(["update:frameToImageData"]);
 
 const canvasRef = ref<HTMLCanvasElement | null>(null);
 const selectedWidth = ref(6);
-const selectedColor = ref("blue");
+const selectedColor = ref("yellow");
 let context: CanvasRenderingContext2D | null = null;
 let isDrawing = false;
 let x: number | null = null;
@@ -76,7 +76,7 @@ const handleMouseMove: (e: MouseEvent) => void = (e) => {
 
     const speed = Math.sqrt(dx * dx + dy * dy) / deltaTime;
 
-    const targetLineWidth = Math.min(20, Math.max(2, speed * 2));
+    const targetLineWidth = Math.min(20, Math.max(2, speed * 3));
     // console.log(targetLineWidth);
 
     // Применяем экспоненциальное сглаживание
