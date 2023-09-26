@@ -1,8 +1,13 @@
 <template>
   <div id="svg_container">
-    <button @click="mode = 'draw'">Draw</button>
+    <button @click="(mode = 'draw'), (selectedStrokeWidth = 5)">Draw</button>
     <button @click="mode = 'move'">Move</button>
-    <button @click="mode = 'drawLine'">Draw Line</button>
+    <button @click="(mode = 'drawLine'), (selectedStrokeWidth = 3)">
+      Draw Line
+    </button>
+    <button @click="(mode = 'drawArrow'), (selectedStrokeWidth = 3)">
+      Draw Arrow
+    </button>
     <select v-model="selectedStrokeWidth">
       <option value="1">1px</option>
       <option value="3">3px</option>
@@ -69,7 +74,7 @@ let initialY = 0;
 let deltaX = 0;
 let deltaY = 0;
 
-const smoothingFactor = 0.1;
+const smoothingFactor = 0.2;
 
 const svgRef = ref<SVGSVGElement | null>(null);
 const svgFramesData: Record<number, string[]> = {};
@@ -124,6 +129,11 @@ const handleMouseDown = (e: MouseEvent) => {
     pathStrings.push(`M${lastX} ${lastY}`);
     strokeWidths.push(selectedStrokeWidth.value);
     colors.push(selectedColor.value);
+  } else if (mode.value === "drawArrow") {
+    isDrawing = true;
+    pathStrings.push(`M${lastX} ${lastY}`);
+    strokeWidths.push(selectedStrokeWidth.value);
+    colors.push(selectedColor.value);
   } else if (mode.value === "move") {
     isMoving = true;
     selectedPathIndex.value = hoveredPathIndex.value;
@@ -142,6 +152,15 @@ const handleMouseMove = (e: MouseEvent) => {
 
     currentPath.push(`L${lastX.toFixed(2)} ${lastY.toFixed(2)}`);
     pathStrings[pathStrings.length - 1] = currentPath.join(" ");
+  } else if (mode.value === "drawArrow" && isDrawing) {
+    let endX = e.offsetX;
+    let endY = e.offsetY;
+
+    // Создаем стрелку (главная линия плюс две меньшие для кончика стрелки)
+    if (lastX && lastY) {
+      const arrowString = generateArrowString(lastX, lastY, endX, endY);
+      pathStrings[pathStrings.length - 1] = arrowString;
+    }
   } else if (mode.value === "drawLine" && isDrawing) {
     let endX = e.offsetX;
     let endY = e.offsetY;
@@ -171,6 +190,27 @@ const handleMouseMove = (e: MouseEvent) => {
     pathStrings[selectedPathIndex.value] = movedPath;
     // console.log(movedPath);
   }
+};
+
+const generateArrowString = (
+  x1: number,
+  y1: number,
+  x2: number,
+  y2: number
+): string => {
+  const angle = Math.atan2(y2 - y1, x2 - x1);
+  const arrowLength = 30; // можно именить для другого размера стрелки
+
+  const angle1 = angle + (Math.PI * 1) / 6;
+  const angle2 = angle - (Math.PI * 1) / 6;
+
+  const x3 = x2 - arrowLength * Math.cos(angle1);
+  const y3 = y2 - arrowLength * Math.sin(angle1);
+
+  const x4 = x2 - arrowLength * Math.cos(angle2);
+  const y4 = y2 - arrowLength * Math.sin(angle2);
+
+  return `M${x1} ${y1} L${x2} ${y2} M${x2} ${y2} L${x3} ${y3} M${x2} ${y2} L${x4} ${y4}`;
 };
 
 const handleMouseUp = () => {
