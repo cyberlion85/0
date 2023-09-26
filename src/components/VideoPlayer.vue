@@ -108,12 +108,8 @@ const handleMetadataLoaded = () => {
 };
 
 const handleTimeUpdate = () => {
-  console.log("azsd");
-  // console.log(Math.floor(videoRef.value.currentTime * FPS) + 1);
-
   if (videoRef.value) {
     currentFrame.value = Math.floor(videoRef.value.currentTime * FPS) + 1;
-    console.log(currentFrame.value);
 
     emits("current-frame", currentFrame.value);
   }

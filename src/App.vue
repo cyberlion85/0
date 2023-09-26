@@ -1,6 +1,6 @@
 <template>
-  <!-- <SketchEditor /> -->
-  <DrawVector ref="canvasRef" class="canvas" />
+  <SketchEditor />
+  <!-- <DrawVector ref="canvasRef" class="canvas" /> -->
 </template>
 
 <script setup lang="ts">

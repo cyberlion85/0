@@ -27,7 +27,24 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from "vue";
+import {
+  ref,
+  reactive,
+  withDefaults,
+  defineProps,
+  defineEmits,
+  defineExpose,
+  watch,
+} from "vue";
+
+const props = withDefaults(
+  defineProps<{
+    currentFrame: number;
+  }>(),
+  { currentFrame: 0 }
+);
+
+const emits = defineEmits(["update:frameToImageData"]);
 
 let mode = ref("draw"); // "draw" or "move"
 let isDrawing = false;
@@ -47,6 +64,37 @@ let deltaY = 0;
 const smoothingFactor = 0.1;
 
 const svgRef = ref<SVGSVGElement | null>(null);
+const svgFramesData: Record<number, string[]> = {};
+
+const saveSvgData = () => {
+  svgFramesData[props.currentFrame] = [...pathStrings];
+
+  emits("update:frameToImageData", Object.keys(svgFramesData).map(Number));
+  //   console.log("Saved SVG data for frame:", props.currentFrame);
+};
+
+const loadSvgData = () => {
+  const data = svgFramesData[props.currentFrame];
+  if (data) {
+    pathStrings.length = 0;
+    data.forEach((path) => pathStrings.push(path));
+    // console.log("Loaded SVG data for frame:", props.currentFrame);
+  } else {
+    pathStrings.length = 0; // Clear the paths if no data for the frame
+    // console.log("No SVG data for frame:", props.currentFrame);
+  }
+};
+defineExpose({
+  saveSvgData,
+  loadSvgData,
+});
+
+watch(
+  () => props.currentFrame,
+  () => {
+    loadSvgData();
+  }
+);
 
 const handleMouseDown = (e: MouseEvent) => {
   if (mode.value === "draw") {
@@ -101,6 +149,7 @@ const handleMouseUp = () => {
   lastX = null;
   lastY = null;
   currentPath = [];
+  saveSvgData();
 };
 
 const hoverPath = (index: number) => {
