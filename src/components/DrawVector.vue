@@ -2,6 +2,14 @@
   <div id="svg_container">
     <button @click="mode = 'draw'">Draw Mode</button>
     <button @click="mode = 'move'">Move Mode</button>
+    <select v-model="selectedStrokeWidth">
+      <option value="1">1px</option>
+      <option value="3">3px</option>
+      <option value="5">5px</option>
+      <option value="7">7px</option>
+      <option value="10">10px</option>
+    </select>
+    <input type="color" v-model="selectedColor" />
     <svg
       ref="svgRef"
       class="svg-canvas"
@@ -15,8 +23,8 @@
         v-for="(pathString, index) in pathStrings"
         :key="index"
         :d="pathString"
-        stroke="black"
-        :stroke-width="strokeWidth"
+        :stroke="colors[index] || selectedColor"
+        :stroke-width="strokeWidths[index] || selectedStrokeWidth"
         fill="none"
         @mouseover="hoverPath(index)"
         @mouseout="unhoverPath"
@@ -57,7 +65,6 @@ let lastX: number | null = null;
 let lastY: number | null = null;
 let initialX = 0;
 let initialY = 0;
-let strokeWidth = ref(5);
 let deltaX = 0;
 let deltaY = 0;
 
@@ -66,11 +73,16 @@ const smoothingFactor = 0.1;
 const svgRef = ref<SVGSVGElement | null>(null);
 const svgFramesData: Record<number, string[]> = {};
 
+let selectedStrokeWidth = ref(5); // Текущая выбранная толщина линии
+let strokeWidths: number[] = reactive([]); // Толщина для каждого пути
+
+let selectedColor = ref("#000000"); // Текущий выбранный цвет
+let colors: string[] = reactive([]); // Цвет для каждого пути
+
 const saveSvgData = () => {
   svgFramesData[props.currentFrame] = [...pathStrings];
 
   emits("update:frameToImageData", Object.keys(svgFramesData).map(Number));
-  //   console.log("Saved SVG data for frame:", props.currentFrame);
 };
 
 const loadSvgData = () => {
@@ -103,6 +115,8 @@ const handleMouseDown = (e: MouseEvent) => {
     lastY = e.offsetY;
     currentPath.push(`M${lastX} ${lastY}`);
     pathStrings.push("");
+    strokeWidths.push(selectedStrokeWidth.value); // Добавляем толщину для нового пути
+    colors.push(selectedColor.value);
   } else if (mode.value === "move") {
     isMoving = true;
     selectedPathIndex.value = hoveredPathIndex.value;
@@ -169,5 +183,6 @@ const unhoverPath = () => {
 }
 .highlight {
   stroke: blue;
+  cursor: pointer;
 }
 </style>
