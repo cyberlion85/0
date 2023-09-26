@@ -8,6 +8,8 @@
     <button @click="(mode = 'drawArrow'), (selectedStrokeWidth = 3)">
       Draw Arrow
     </button>
+    <button @click="undoLastPath">Undo</button>
+    <button @click="clearCanvas">Clear</button>
     <select v-model="selectedStrokeWidth">
       <option value="1">1px</option>
       <option value="3">3px</option>
@@ -139,6 +141,22 @@ const handleMouseDown = (e: MouseEvent) => {
     selectedPathIndex.value = hoveredPathIndex.value;
     initialX = e.offsetX;
     initialY = e.offsetY;
+  }
+};
+
+const clearCanvas = () => {
+  pathStrings.length = 0; // Clear all paths
+  colors.length = 0; // Clear all colors
+  strokeWidths.length = 0; // Clear all stroke widths
+  saveSvgData();
+};
+
+const undoLastPath = () => {
+  if (pathStrings.length > 0) {
+    pathStrings.pop();
+    colors.pop();
+    strokeWidths.pop();
+    saveSvgData(); // Update the SVG data after removing the last path
   }
 };
 
