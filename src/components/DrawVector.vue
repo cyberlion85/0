@@ -1,7 +1,8 @@
 <template>
   <div id="svg_container">
-    <button @click="mode = 'draw'">Draw Mode</button>
-    <button @click="mode = 'move'">Move Mode</button>
+    <button @click="mode = 'draw'">Draw</button>
+    <button @click="mode = 'move'">Move</button>
+    <button @click="mode = 'drawLine'">Draw Line</button>
     <select v-model="selectedStrokeWidth">
       <option value="1">1px</option>
       <option value="3">3px</option>
@@ -107,21 +108,21 @@ watch(
     loadSvgData();
   }
 );
-watch(
-  () => selectedColor.value,
-  (a) => {
-    console.log(a);
-  }
-);
 
 const handleMouseDown = (e: MouseEvent) => {
+  lastX = e.offsetX;
+  lastY = e.offsetY;
+
   if (mode.value === "draw") {
     isDrawing = true;
-    lastX = e.offsetX;
-    lastY = e.offsetY;
     currentPath.push(`M${lastX} ${lastY}`);
     pathStrings.push("");
-    strokeWidths.push(selectedStrokeWidth.value); // Добавляем толщину для нового пути
+    strokeWidths.push(selectedStrokeWidth.value);
+    colors.push(selectedColor.value);
+  } else if (mode.value === "drawLine") {
+    isDrawing = true;
+    pathStrings.push(`M${lastX} ${lastY}`);
+    strokeWidths.push(selectedStrokeWidth.value);
     colors.push(selectedColor.value);
   } else if (mode.value === "move") {
     isMoving = true;
@@ -141,6 +142,10 @@ const handleMouseMove = (e: MouseEvent) => {
 
     currentPath.push(`L${lastX.toFixed(2)} ${lastY.toFixed(2)}`);
     pathStrings[pathStrings.length - 1] = currentPath.join(" ");
+  } else if (mode.value === "drawLine" && isDrawing) {
+    let endX = e.offsetX;
+    let endY = e.offsetY;
+    pathStrings[pathStrings.length - 1] = `M${lastX} ${lastY} L${endX} ${endY}`;
   } else if (
     mode.value === "move" &&
     isMoving &&
