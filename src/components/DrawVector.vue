@@ -76,7 +76,7 @@ const svgFramesData: Record<number, string[]> = {};
 let selectedStrokeWidth = ref(5); // Текущая выбранная толщина линии
 let strokeWidths: number[] = reactive([]); // Толщина для каждого пути
 
-let selectedColor = ref("#000000"); // Текущий выбранный цвет
+let selectedColor = ref("#e1da09"); // Текущий выбранный цвет
 let colors: string[] = reactive([]); // Цвет для каждого пути
 
 const saveSvgData = () => {
@@ -105,6 +105,12 @@ watch(
   () => props.currentFrame,
   () => {
     loadSvgData();
+  }
+);
+watch(
+  () => selectedColor.value,
+  (a) => {
+    console.log(a);
   }
 );
 
@@ -150,10 +156,15 @@ const handleMouseMove = (e: MouseEvent) => {
       (match, command, x, y) => {
         x = parseFloat(x) + deltaX;
         y = parseFloat(y) + deltaY;
-        return `${command}${x} ${y}`;
+        if (x >= 0 && x <= 1366 && y >= 0 && y <= 768) {
+          return `${command}${x} ${y}`;
+        } else isMoving = false;
+
+        return `${command}${parseFloat(x) - deltaX} ${parseFloat(y) - deltaY}`;
       }
     );
     pathStrings[selectedPathIndex.value] = movedPath;
+    // console.log(movedPath);
   }
 };
 
@@ -179,7 +190,7 @@ const unhoverPath = () => {
 
 <style scoped>
 .svg-canvas {
-  border: 1px solid black;
+  border: 1px solid rgb(94, 255, 0);
 }
 .highlight {
   stroke: blue;
