@@ -3,11 +3,13 @@
     <button @click="(mode = 'draw'), (selectedStrokeWidth = 5)">Draw</button>
     <button @click="mode = 'move'">Move</button>
     <button @click="(mode = 'drawLine'), (selectedStrokeWidth = 3)">
-      Draw Line
+      Line
     </button>
     <button @click="(mode = 'drawArrow'), (selectedStrokeWidth = 3)">
-      Draw Arrow
+      Arrow
     </button>
+    <button @click="mode = 'text'">Text</button>
+
     <button @click="undoLastPath">Undo</button>
     <button @click="clearCanvas">Clear</button>
     <select v-model="selectedStrokeWidth">
@@ -18,6 +20,13 @@
       <option value="10">10px</option>
     </select>
     <input type="color" v-model="selectedColor" />
+    <input
+      v-if="mode === 'text' && isAddingText"
+      v-model="newText"
+      @keyup.enter="confirmText"
+      class="text-input"
+      :style="{ left: `${textPosition.x}px`, top: `${textPosition.y}px` }"
+    />
     <svg
       ref="svgRef"
       class="svg-canvas"
@@ -38,6 +47,19 @@
         @mouseout="unhoverPath"
         :class="{ highlight: index === hoveredPathIndex }"
       />
+      <text
+        v-for="(textElement, index) in texts"
+        :key="'text-' + index"
+        :x="textElement.x"
+        :y="textElement.y"
+        :fill="textElement.color"
+        :font-size="textElement.fontSize"
+        @mouseover="hoverText(index)"
+        @mouseout="unhoverText"
+        :class="{ highlight: index === hoveredTextIndex }"
+      >
+        {{ textElement.text }}
+      </text>
     </svg>
   </div>
 </template>
@@ -76,6 +98,15 @@ let initialY = 0;
 let deltaX = 0;
 let deltaY = 0;
 
+let texts = reactive<
+  Array<{ x: number; y: number; text: string; color: string; fontSize: string }>
+>([]);
+let hoveredTextIndex = ref<number | null>(null);
+
+let isAddingText = ref(false);
+let textPosition = ref({ x: 0, y: 0 });
+let newText = ref("");
+
 const smoothingFactor = 0.2;
 
 const svgRef = ref<SVGSVGElement | null>(null);
@@ -91,6 +122,20 @@ const saveSvgData = () => {
   svgFramesData[props.currentFrame] = [...pathStrings];
 
   emits("update:frameToImageData", Object.keys(svgFramesData).map(Number));
+};
+
+const confirmText = () => {
+  if (newText.value.trim()) {
+    texts.push({
+      x: textPosition.value.x,
+      y: textPosition.value.y,
+      text: newText.value,
+      color: selectedColor.value,
+      fontSize: selectedStrokeWidth.value + "px",
+    });
+    newText.value = "";
+    isAddingText.value = false;
+  }
 };
 
 const loadSvgData = () => {
@@ -126,6 +171,10 @@ const handleMouseDown = (e: MouseEvent) => {
     pathStrings.push("");
     strokeWidths.push(selectedStrokeWidth.value);
     colors.push(selectedColor.value);
+  } else if (mode.value === "text") {
+    textPosition.value = { x: e.offsetX, y: e.offsetY };
+    isAddingText.value = true;
+    return;
   } else if (mode.value === "drawLine") {
     isDrawing = true;
     pathStrings.push(`M${lastX} ${lastY}`);
@@ -158,6 +207,16 @@ const undoLastPath = () => {
     strokeWidths.pop();
     saveSvgData(); // Update the SVG data after removing the last path
   }
+};
+
+const hoverText = (index: number) => {
+  if (mode.value === "move") {
+    hoveredTextIndex.value = index;
+  }
+};
+
+const unhoverText = () => {
+  hoveredTextIndex.value = null;
 };
 
 const handleMouseMove = (e: MouseEvent) => {
@@ -258,5 +317,12 @@ const unhoverPath = () => {
 .highlight {
   stroke: blue;
   cursor: pointer;
+}
+.text-input {
+  position: absolute;
+  background: white;
+  border: 1px solid black;
+  padding: 5px;
+  z-index: 2;
 }
 </style>
