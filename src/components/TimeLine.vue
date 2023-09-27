@@ -11,7 +11,11 @@
         frame === playingFrame ? 'current-frame' : '',
         props.framesWithSketch.includes(frame) ? 'sketch-frame' : '',
       ]"
-      @mouseover="highlightFrame(frame)"
+      @mouseover="
+        (evt) => {
+          highlightFrame(frame), playFramesByMouse(evt, frame);
+        }
+      "
       @mouseout="unhighlightFrame"
       @click="selectFrame(frame)"
     >
@@ -43,6 +47,11 @@ const selectedFrame = ref(0);
 const highlightFrame = (frame: number) => {
   highlightedFrame.value = frame;
 };
+const playFramesByMouse = (evt: MouseEvent, frame: number) => {
+  if (evt.buttons === 1) {
+    emits("selectedFrame", frame);
+  }
+};
 
 const unhighlightFrame = () => {
   highlightedFrame.value = 0;
@@ -62,17 +71,19 @@ const selectFrame = (frame: number) => {
 }
 
 .frame {
-  flex: 1;
+  /* flex: 1; */
   height: 50px;
+  min-width: 2px;
+  width: 100%;
   position: relative;
 }
 
 .blue-frame {
-  background-color: rgb(81, 81, 81);
+  background-color: rgb(61, 61, 61);
 }
 
 .grey-frame {
-  background-color: rgb(55, 55, 55);
+  background-color: rgb(65, 65, 65);
 }
 
 .selected-frame {

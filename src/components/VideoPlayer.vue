@@ -35,7 +35,7 @@ const props = withDefaults(
 );
 
 const videoRef = ref();
-const emits = defineEmits(["frame-stepped", "current-frame"]);
+const emits = defineEmits(["frame-stepped", "current-frame", "total-frames"]);
 const currentFrame = ref<number>(1);
 const FPS = 24;
 
@@ -102,9 +102,11 @@ watch(
 );
 
 const handleMetadataLoaded = () => {
-  // if (videoRef.value) {
-  //   frameDuration = 1 / videoRef.value.playbackRate / FPS;
-  // }
+  if (videoRef.value) {
+    const durationInSeconds = videoRef.value.duration;
+    const totalFrames = Math.floor(durationInSeconds * FPS);
+    emits("total-frames", totalFrames);
+  }
 };
 
 const handleTimeUpdate = () => {

@@ -71,7 +71,7 @@ const props = withDefaults(
 
 const emits = defineEmits(["update:frameToImageData"]);
 
-let mode = ref("draw"); // "draw" or "move"
+let mode = ref("draw");
 let isDrawing = false;
 let isMoving = false;
 let currentPath: string[] = [];
@@ -85,7 +85,7 @@ let initialY = 0;
 let deltaX = 0;
 let deltaY = 0;
 
-const smoothingFactor = 0.2;
+const smoothingFactor = 0.8;
 
 const svgRef = ref<SVGSVGElement | null>(null);
 const svgFramesData: Record<number, string[]> = {};

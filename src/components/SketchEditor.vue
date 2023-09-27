@@ -10,6 +10,7 @@
           :prev-frame="isPrevFrame"
           :playing="isPlaying"
           :selected-frame="selectedFrame"
+          @total-frames="(total) => (totalFrames = total)"
           @frame-stepped="(isNextFrame = false), (isPrevFrame = false)"
           @current-frame="(frameNum) => (currentFrame = frameNum)"
           class="player"
@@ -43,7 +44,7 @@
       @selected-frame="(frame) => (selectedFrame = frame)"
       :framesWithSketch="framesWithSketch"
       :playingFrame="currentFrame"
-      :totalFrames="500"
+      :totalFrames="totalFrames"
     />
   </div>
 </template>
@@ -63,6 +64,7 @@ const canvasRef = ref<null>(null);
 
 const isPlaying = ref(false);
 const currentFrame = ref(0);
+const totalFrames = ref(0);
 const isNextFrame = ref(false);
 const isPrevFrame = ref(false);
 const framesWithSketch = ref([]);
