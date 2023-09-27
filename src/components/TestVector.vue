@@ -95,8 +95,9 @@ const selectedStrokeWidth = ref(5);
 const selectedColor = ref("#000000");
 let simplifiedPathRes = ref();
 
-const epsilon = 0.5;
-const smoothingFactor = 0.2;
+const epsilon = 0.1;
+// выключен
+const smoothingFactor = 1;
 
 const handleMouseDown = (e: MouseEvent) => {
   isDrawing = true;
@@ -115,8 +116,9 @@ const handleMouseMove = (e: MouseEvent) => {
     lastY = newY;
 
     currentPath.push({ x: newX, y: newY });
-
-    const simplifiedPath = ramerDouglasPeucker(currentPath, epsilon);
+    const currentPoint = { x: e.offsetX, y: e.offsetY };
+    const smoothedPAth = smoothPath(currentPath, 0.1, currentPoint); // Передаем текущую точку
+    const simplifiedPath = ramerDouglasPeucker(smoothedPAth, epsilon);
 
     if (simplifiedPath.length) simplifiedPathRes.value = simplifiedPath.length;
     pathStrings[pathStrings.length - 1] = simplifiedPath
@@ -126,6 +128,31 @@ const handleMouseMove = (e: MouseEvent) => {
       )
       .join(" ");
   }
+};
+
+const smoothPath = (
+  path: Point[],
+  alpha: number,
+  currentPoint: Point
+): Point[] => {
+  if (path.length < 2) return path;
+
+  const smoothed: Point[] = [path[0]];
+
+  for (let i = 1; i < path.length; i++) {
+    const prev = smoothed[i - 1];
+    const curr = path[i];
+
+    const smoothedX = alpha * curr.x + (1 - alpha) * prev.x;
+    const smoothedY = alpha * curr.y + (1 - alpha) * prev.y;
+
+    smoothed.push({ x: smoothedX, y: smoothedY });
+  }
+
+  // Добавляем текущую точку курсора в конец сглаженного пути
+  smoothed.push(currentPoint);
+
+  return smoothed;
 };
 
 const handleMouseUp = () => {
