@@ -2,6 +2,7 @@
   <div id="svg_container">
     <button @click="(mode = 'draw'), (selectedStrokeWidth = 5)">Draw</button>
     <button @click="mode = 'move'">Move</button>
+    <button @click="mode = 'delete'">Delete Mode</button>
     <button @click="(mode = 'drawLine'), (selectedStrokeWidth = 3)">
       Draw Line
     </button>
@@ -36,7 +37,15 @@
         fill="none"
         @mouseover="hoverPath(index)"
         @mouseout="unhoverPath"
-        :class="{ highlight: index === hoveredPathIndex }"
+        :class="[
+          index === hoveredPathIndex
+            ? mode === 'move'
+              ? 'highlight'
+              : mode === 'delete'
+              ? 'highlight-delete'
+              : ''
+            : '',
+        ]"
       />
     </svg>
   </div>
@@ -115,6 +124,36 @@ watch(
     loadSvgData();
   }
 );
+
+const handleDeleteClick = () => {
+  if (mode.value === "delete") {
+    if (hoveredPathIndex.value !== null) {
+      pathStrings.splice(hoveredPathIndex.value, 1);
+      colors.splice(hoveredPathIndex.value, 1);
+      strokeWidths.splice(hoveredPathIndex.value, 1);
+      hoveredPathIndex.value = null;
+      saveSvgData();
+    }
+  }
+};
+
+const handleMouseUp = () => {
+  isDrawing = false;
+  isMoving = false;
+  lastX = null;
+  lastY = null;
+  currentPath = [];
+  saveSvgData();
+
+  handleDeleteClick(); // Добавлен вызов функции удаления
+};
+
+// Обновлённый обработчик наведения на объект
+const hoverPath = (index: number) => {
+  if (mode.value === "move" || mode.value === "delete") {
+    hoveredPathIndex.value = index;
+  }
+};
 
 const handleMouseDown = (e: MouseEvent) => {
   lastX = e.offsetX;
@@ -231,21 +270,6 @@ const generateArrowString = (
   return `M${x1} ${y1} L${x2} ${y2} M${x2} ${y2} L${x3} ${y3} M${x2} ${y2} L${x4} ${y4}`;
 };
 
-const handleMouseUp = () => {
-  isDrawing = false;
-  isMoving = false;
-  lastX = null;
-  lastY = null;
-  currentPath = [];
-  saveSvgData();
-};
-
-const hoverPath = (index: number) => {
-  if (mode.value === "move") {
-    hoveredPathIndex.value = index;
-  }
-};
-
 const unhoverPath = () => {
   hoveredPathIndex.value = null;
 };
@@ -257,6 +281,10 @@ const unhoverPath = () => {
 }
 .highlight {
   stroke: blue;
+  cursor: pointer;
+}
+.highlight-delete {
+  stroke: red;
   cursor: pointer;
 }
 </style>
