@@ -117,7 +117,7 @@ const handleMouseMove = (e: MouseEvent) => {
 
     currentPath.push({ x: newX, y: newY });
     const currentPoint = { x: e.offsetX, y: e.offsetY };
-    const smoothedPAth = smoothPath(currentPath, 0.1, currentPoint); // Передаем текущую точку
+    const smoothedPAth = smoothPath(currentPath, 0.1, currentPoint); // Передаем текущую точку чтобы убрать отставание мышки
     const simplifiedPath = ramerDouglasPeucker(smoothedPAth, epsilon);
 
     if (simplifiedPath.length) simplifiedPathRes.value = simplifiedPath.length;
