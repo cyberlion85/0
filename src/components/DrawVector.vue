@@ -18,7 +18,13 @@
       <option value="7">7px</option>
       <option value="10">10px</option>
     </select>
-    <input type="color" v-model="selectedColor" />
+    <input
+      type="color"
+      v-model="selectedColor"
+      v-if="isColorPickerVisible"
+      @change="hideColorPicker"
+    />
+    <button @click="showColorPicker">Change Color</button>
     <svg
       ref="svgRef"
       class="svg-canvas"
@@ -77,6 +83,7 @@ interface Point {
 const emits = defineEmits(["update:frameToImageData"]);
 
 let mode = ref("draw");
+const isColorPickerVisible = ref(false);
 let isDrawing = false;
 let isMoving = false;
 let currentPath: Point[] = [];
@@ -106,6 +113,14 @@ const saveSvgData = () => {
   svgFramesData[props.currentFrame] = [...pathStrings];
 
   emits("update:frameToImageData", Object.keys(svgFramesData).map(Number));
+};
+
+const hideColorPicker = () => {
+  isColorPickerVisible.value = false;
+};
+
+const showColorPicker = () => {
+  isColorPickerVisible.value = true;
 };
 
 const loadSvgData = () => {
@@ -153,24 +168,16 @@ const handleMouseUp = () => {
 
   handleDeleteClick();
 };
-
-// Обновлённый обработчик наведения на объект
-const hoverPath = (index: number) => {
-  if (mode.value === "move" || mode.value === "delete") {
-    hoveredPathIndex.value = index;
-  }
-};
-
 const handleMouseDown = (e: MouseEvent) => {
   lastX = e.offsetX;
   lastY = e.offsetY;
 
   if (mode.value === "draw") {
     isDrawing = true;
-    currentPath = [{ x: lastX, y: lastY }];
-    pathStrings.push("");
+    pathStrings.push(`M${lastX} ${lastY}`);
     strokeWidths.push(selectedStrokeWidth.value);
     colors.push(selectedColor.value);
+    currentPath = [{ x: lastX, y: lastY }];
   } else if (mode.value === "drawLine") {
     isDrawing = true;
     pathStrings.push(`M${lastX} ${lastY}`);
@@ -188,29 +195,8 @@ const handleMouseDown = (e: MouseEvent) => {
     initialY = e.offsetY;
   }
 };
-
-const clearCanvas = () => {
-  pathStrings.length = 0; // Clear all paths
-  colors.length = 0; // Clear all colors
-  strokeWidths.length = 0; // Clear all stroke widths
-  saveSvgData();
-};
-
-const undoLastPath = () => {
-  if (pathStrings.length > 0) {
-    pathStrings.pop();
-    colors.pop();
-    strokeWidths.pop();
-    saveSvgData(); // Update the SVG data after removing the last path
-  }
-};
-
 const handleMouseMove = (e: MouseEvent) => {
   if (mode.value === "draw" && isDrawing && lastX !== null && lastY !== null) {
-    console.log(isDrawing);
-    console.log(lastX);
-    console.log(lastY);
-
     const newX = lastX + (e.offsetX - lastX) * smoothingFactor;
     const newY = lastY + (e.offsetY - lastY) * smoothingFactor;
 
@@ -218,9 +204,10 @@ const handleMouseMove = (e: MouseEvent) => {
     lastY = newY;
 
     currentPath.push({ x: newX, y: newY });
+
     const currentPoint = { x: e.offsetX, y: e.offsetY };
 
-    const smoothedPAth = smoothPath(currentPath, 0.1, currentPoint); // Передаем текущую точку чтобы убрать отставание мышки
+    const smoothedPAth = smoothPath(currentPath, 0.3, currentPoint); // Передаем текущую точку чтобы убрать отставание мышки
     const simplifiedPath = ramerDouglasPeucker(smoothedPAth, epsilon);
 
     if (simplifiedPath.length) simplifiedPathRes.value = simplifiedPath.length;
@@ -266,9 +253,32 @@ const handleMouseMove = (e: MouseEvent) => {
       }
     );
     pathStrings[selectedPathIndex.value] = movedPath;
-    // console.log(movedPath);
   }
 };
+
+// Обновлённый обработчик наведения на объект
+const hoverPath = (index: number) => {
+  if (mode.value === "move" || mode.value === "delete") {
+    hoveredPathIndex.value = index;
+  }
+};
+
+const clearCanvas = () => {
+  pathStrings.length = 0; // Clear all paths
+  colors.length = 0; // Clear all colors
+  strokeWidths.length = 0; // Clear all stroke widths
+  saveSvgData();
+};
+
+const undoLastPath = () => {
+  if (pathStrings.length > 0) {
+    pathStrings.pop();
+    colors.pop();
+    strokeWidths.pop();
+    saveSvgData(); // Update the SVG data after removing the last path
+  }
+};
+
 const ramerDouglasPeucker = (points: Point[], epsilon: number): Point[] => {
   let dmax = 0;
   let index = 0;
