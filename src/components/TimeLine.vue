@@ -1,30 +1,33 @@
 <template>
-  <!-- props.framesWithSketch.includes(frame) ? 'sketch-frame' : '', -->
-  <div class="timeline">
-    <div
-      v-for="frame in totalFrames"
-      :key="frame"
-      class="frame"
-      :class="[
-        frame % 2 === 0 ? 'blue-frame' : 'grey-frame',
-        frame === selectedFrame ? 'selected-frame' : '',
-        frame === playingFrame ? 'current-frame' : '',
-        props.framesWithSketch.includes(frame) ? 'sketch-frame' : '',
-      ]"
-      @mouseover="
-        (evt) => {
-          highlightFrame(frame), playFramesByMouse(evt, frame);
-        }
-      "
-      @mouseout="unhighlightFrame"
-      @click="selectFrame(frame)"
-    >
-      <div v-if="frame === selectedFrame" class="frame-number">
-        {{ frame }}
+  <div class="timeline-container">
+    <!-- Кнопка Play -->
+    <div class="play-button">Play</div>
+    <div class="timeline">
+      <div
+        v-for="frame in totalFrames"
+        :key="frame"
+        class="frame"
+        :class="[
+          frame % 2 === 0 ? 'blue-frame' : 'grey-frame',
+          frame === selectedFrame ? 'selected-frame' : '',
+          frame === playingFrame ? 'current-frame' : '',
+          props.framesWithSketch.includes(frame) ? 'sketch-frame' : '',
+        ]"
+        @mouseover="
+          (evt) => {
+            highlightFrame(frame), playFramesByMouse(evt, frame);
+          }
+        "
+        @mouseout="unhighlightFrame"
+        @click="selectFrame(frame)"
+      >
+        <div v-if="frame === selectedFrame" class="frame-number">
+          {{ frame }}
+        </div>
       </div>
     </div>
+    <div class="frame-number-container">Frame: {{ highlightedFrame }}</div>
   </div>
-  highlightedFrame: {{ highlightedFrame }}
 </template>
 
 <script setup lang="ts">
@@ -64,15 +67,39 @@ const selectFrame = (frame: number) => {
 </script>
 
 <style scoped>
+.timeline-container {
+  display: grid;
+  grid-template-columns: 70px 1fr 70px;
+  align-items: center;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.play-button,
+.frame-number-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-right: 2px solid rgb(64, 239, 6);
+  height: 35px;
+  min-width: 70px;
+  background-color: rgb(65, 65, 65);
+  color: white;
+  font-size: 16px;
+}
+
 .timeline {
   display: flex;
-  flex-direction: row;
-  width: 100%;
+  height: 35px;
+}
+
+.play-button:hover {
+  background-color: rgb(92, 92, 92);
+  cursor: pointer;
 }
 
 .frame {
   /* flex: 1; */
-  height: 50px;
   min-width: 2px;
   width: 100%;
   position: relative;

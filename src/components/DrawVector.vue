@@ -244,6 +244,7 @@ const handleMouseMove = (e: MouseEvent) => {
 
     currentPath.push({ x: newX, y: newY });
 
+    // const currentPoint = { x: lastX, y: lastY };
     const currentPoint = { x: e.offsetX, y: e.offsetY };
 
     const smoothedPAth = smoothPath(
