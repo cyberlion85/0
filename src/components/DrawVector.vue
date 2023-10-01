@@ -1,5 +1,42 @@
 <template>
   <div id="svg_container">
+    <div style="color: yellow">
+      <div>Before: {{ currentPath.length }}</div>
+      <div>After: {{ simplifiedLenth }}</div>
+    </div>
+    <div style="margin-top: 10px; color: white">
+      <label for="smoothingFactor"
+        >Smoothing Factor: {{ smoothingFactor }}</label
+      >
+      <input
+        type="range"
+        id="smoothingFactor"
+        v-model="smoothingFactor"
+        min="0.1"
+        max="1"
+        step="0.1"
+      />
+      <label for="alphaFactor">Alpha Factor Func: {{ alphaFactor }}</label>
+      <input
+        type="range"
+        id="alphaFactor"
+        v-model="alphaFactor"
+        min="0.1"
+        max="1"
+        step="0.1"
+      />
+
+      <label for="epsilon">Epsilon: {{ epsilon }}</label>
+      <input
+        type="range"
+        id="epsilon"
+        v-model="epsilon"
+        min="0"
+        max="1"
+        step="0.1"
+      />
+    </div>
+
     <button @click="(mode = 'draw'), (selectedStrokeWidth = 5)">Draw</button>
     <button @click="mode = 'move'">Move</button>
     <button @click="mode = 'delete'">Delete Mode</button>
@@ -88,6 +125,7 @@ let isDrawing = false;
 let isMoving = false;
 let currentPath: Point[] = [];
 let simplifiedPathRes = ref();
+let simplifiedLenth = ref(0);
 let pathStrings: string[] = reactive([]);
 let selectedPathIndex = ref<number | null>(null); // Make it reactive
 let hoveredPathIndex = ref<number | null>(null);
@@ -97,8 +135,9 @@ let initialX = 0;
 let initialY = 0;
 let deltaX = 0;
 let deltaY = 0;
-const epsilon = 0.1;
-const smoothingFactor = 1; //1 выкл
+const smoothingFactor = ref(0.3);
+const alphaFactor = ref(0.3);
+const epsilon = ref(0.3);
 
 const svgRef = ref<SVGSVGElement | null>(null);
 const svgFramesData: Record<number, string[]> = {};
@@ -197,8 +236,8 @@ const handleMouseDown = (e: MouseEvent) => {
 };
 const handleMouseMove = (e: MouseEvent) => {
   if (mode.value === "draw" && isDrawing && lastX !== null && lastY !== null) {
-    const newX = lastX + (e.offsetX - lastX) * smoothingFactor;
-    const newY = lastY + (e.offsetY - lastY) * smoothingFactor;
+    const newX = lastX + (e.offsetX - lastX) * smoothingFactor.value;
+    const newY = lastY + (e.offsetY - lastY) * smoothingFactor.value;
 
     lastX = newX;
     lastY = newY;
@@ -207,8 +246,13 @@ const handleMouseMove = (e: MouseEvent) => {
 
     const currentPoint = { x: e.offsetX, y: e.offsetY };
 
-    const smoothedPAth = smoothPath(currentPath, 0.3, currentPoint); // Передаем текущую точку чтобы убрать отставание мышки
-    const simplifiedPath = ramerDouglasPeucker(smoothedPAth, epsilon);
+    const smoothedPAth = smoothPath(
+      currentPath,
+      alphaFactor.value,
+      currentPoint
+    ); // Передаем текущую точку чтобы убрать отставание мышки
+    const simplifiedPath = ramerDouglasPeucker(smoothedPAth, epsilon.value);
+    simplifiedLenth.value = simplifiedPath.length;
 
     if (simplifiedPath.length) simplifiedPathRes.value = simplifiedPath.length;
     pathStrings[pathStrings.length - 1] = simplifiedPath
@@ -256,7 +300,6 @@ const handleMouseMove = (e: MouseEvent) => {
   }
 };
 
-// Обновлённый обработчик наведения на объект
 const hoverPath = (index: number) => {
   if (mode.value === "move" || mode.value === "delete") {
     hoveredPathIndex.value = index;
