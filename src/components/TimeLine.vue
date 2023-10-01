@@ -25,8 +25,8 @@
           {{ frame }}
         </div>
       </div>
+      <div class="frame-number-container">Frame: {{ highlightedFrame }}</div>
     </div>
-    <div class="frame-number-container">Frame: {{ highlightedFrame }}</div>
   </div>
 </template>
 
@@ -75,12 +75,22 @@ const selectFrame = (frame: number) => {
   box-sizing: border-box;
 }
 
-.play-button,
-.frame-number-container {
+.play-button {
   display: flex;
   justify-content: center;
   align-items: center;
   border-right: 2px solid rgb(64, 239, 6);
+  height: 35px;
+  min-width: 70px;
+  background-color: rgb(65, 65, 65);
+  color: white;
+  font-size: 16px;
+}
+.frame-number-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-left: 2px solid rgb(64, 239, 6);
   height: 35px;
   min-width: 70px;
   background-color: rgb(65, 65, 65);
@@ -100,7 +110,7 @@ const selectFrame = (frame: number) => {
 
 .frame {
   /* flex: 1; */
-  min-width: 2px;
+  /* min-width: 2px; */
   width: 100%;
   position: relative;
 }
