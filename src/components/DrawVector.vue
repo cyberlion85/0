@@ -37,7 +37,7 @@
       />
     </div>
 
-    <button @click="(mode = 'draw'), (selectedStrokeWidth = 5)">Draw</button>
+    <button @click="(mode = 'draw'), (selectedStrokeWidth = 3)">Draw</button>
     <button @click="mode = 'move'">Move</button>
     <button @click="mode = 'delete'">Delete Mode</button>
     <button @click="(mode = 'drawLine'), (selectedStrokeWidth = 3)">
@@ -144,7 +144,7 @@ const epsilon = ref(0.3);
 const svgRef = ref<SVGSVGElement | null>(null);
 const svgFramesData: Record<number, string[]> = {};
 
-let selectedStrokeWidth = ref(5); // Текущая выбранная толщина линии
+let selectedStrokeWidth = ref(3); // Текущая выбранная толщина линии
 let strokeWidths: number[] = reactive([]); // Толщина для каждого пути
 
 let selectedColor = ref("#e1da09"); // Текущий выбранный цвет

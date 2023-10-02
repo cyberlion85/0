@@ -26,12 +26,12 @@ import {
 const props = withDefaults(
   defineProps<{
     src: string;
-    playing: boolean;
+    startPlay: boolean;
     nextFrame: boolean;
     prevFrame: boolean;
     selectedFrame: number | null;
   }>(),
-  { playing: false }
+  { startPlay: false }
 );
 
 const videoRef = ref();
@@ -44,7 +44,7 @@ const frameDuration = 1 / FPS;
 let previousTime = 0;
 
 const loop = () => {
-  if (videoRef.value && props.playing) {
+  if (videoRef.value && props.startPlay) {
     // console.log(videoRef.value);
 
     const videoElem = videoRef.value;
@@ -63,7 +63,7 @@ onMounted(() => {
 });
 
 watch(
-  () => props.playing,
+  () => props.startPlay,
   (newVal) => {
     if (videoRef.value) {
       if (newVal) {
@@ -123,6 +123,7 @@ const stepForward = () => {
     requestAnimationFrame(() => {
       if (videoRef.value) {
         setFrame(currentFrame.value + 1);
+
         emits("frame-stepped");
       }
     });
@@ -135,12 +136,15 @@ const stepBackward = () => {
   }
 };
 
-// TODO проверить
 const setFrame = (frameNumber: number) => {
   if (videoRef.value) {
+    console.log("set frame call");
+
     const targetTime = frameNumber / FPS;
     // вычитаем половину длинн фрейма чтобы попасть в центр кадра
     videoRef.value.currentTime = targetTime - frameDuration / 2;
+    // FIXME не работает
+    emits("current-frame", frameNumber);
   }
 };
 </script>

@@ -11,7 +11,7 @@
           ref="videoPlayerRef"
           :next-frame="isNextFrame"
           :prev-frame="isPrevFrame"
-          :playing="isPlaying"
+          :startPlay="isPlaying"
           :selected-frame="selectedFrame"
           @total-frames="(total) => (totalFrames = total)"
           @frame-stepped="(isNextFrame = false), (isPrevFrame = false)"
@@ -38,8 +38,8 @@
     ></draggableElement>
 
     <div class="controls">
-      <button @click="isPlaying = true">Play</button>
-      <button @click="isPlaying = false">Stop</button>
+      <!-- <button @click="isPlaying = true">Play</button> -->
+      <!-- <button @click="isPlaying = false">Stop</button> -->
       <button @click="isPrevFrame = true">Step Backward</button>
       <button @click="isNextFrame = true">Step Forward</button>
 
@@ -47,9 +47,11 @@
     </div>
     <TimeLine
       @selected-frame="(frame) => (selectedFrame = frame)"
+      @clicked-play="isPlaying = !isPlaying"
       :framesWithSketch="framesWithSketch"
       :playingFrame="currentFrame"
       :totalFrames="totalFrames"
+      :isPlaying="isPlaying"
     />
   </div>
 </template>
