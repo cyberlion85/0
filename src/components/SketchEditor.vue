@@ -3,7 +3,10 @@
     <button :disabled="!isVector" @click="isVector = false">Raster</button>
     <button :disabled="isVector" @click="isVector = true">Vector</button>
     <draggableElement
-      ><div class="video-draw-container">
+      ><div
+        class="video-draw-container"
+        :style="{ height: videoHeight + 'px', width: videoWidth + 'px' }"
+      >
         <VideoPlayer
           ref="videoPlayerRef"
           :next-frame="isNextFrame"
@@ -14,7 +17,7 @@
           @frame-stepped="(isNextFrame = false), (isPrevFrame = false)"
           @current-frame="(frameNum) => (currentFrame = frameNum)"
           class="player"
-          src="/24.mov"
+          :src="filename"
         />
         <DrawVector
           v-if="isVector"
@@ -22,6 +25,8 @@
           :currentFrame="currentFrame"
           ref="canvasRef"
           class="canvas"
+          :video-height="videoHeight"
+          :video-width="videoWidth"
         />
         <DrawCanvas
           v-if="!isVector"
@@ -59,7 +64,6 @@ import TimeLine from "./TimeLine.vue";
 
 const videoPlayerRef = ref(null);
 const isVector = ref(true);
-
 const canvasRef = ref<null>(null);
 
 const isPlaying = ref(false);
@@ -69,13 +73,20 @@ const isNextFrame = ref(false);
 const isPrevFrame = ref(false);
 const framesWithSketch = ref([]);
 const selectedFrame = ref<number | null>(null);
+
+const filename = "/sample_movie.mp4";
+const videoHeight = 534;
+const videoWidth = 1280;
+// const filename = "/24.mov";
+// const videoHeight = 768;
+// const videoWidth = 1366;
 </script>
 
 <style scoped>
 .video-draw-container {
   position: relative;
-  width: 1366px;
-  height: 768px;
+  /* width: 1366px;
+  height: 768px; */
   overflow: hidden;
   margin: auto;
 }

@@ -65,8 +65,8 @@
     <svg
       ref="svgRef"
       class="svg-canvas"
-      width="1366"
-      height="768"
+      :width="props.videoWidth"
+      :height="props.videoHeight"
       @mousedown.left="handleMouseDown"
       @mousemove="handleMouseMove"
       @mouseup.left="handleMouseUp"
@@ -108,6 +108,8 @@ import {
 const props = withDefaults(
   defineProps<{
     currentFrame: number;
+    videoHeight: number;
+    videoWidth: number;
   }>(),
   { currentFrame: 0 }
 );
