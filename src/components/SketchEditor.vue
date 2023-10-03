@@ -7,7 +7,7 @@
         class="video-draw-container"
         :style="{ height: videoHeight + 'px', width: videoWidth + 'px' }"
       >
-        <VideoPlayer
+        <!-- <VideoPlayer
           ref="videoPlayerRef"
           :next-frame="isNextFrame"
           :prev-frame="isPrevFrame"
@@ -18,7 +18,7 @@
           @current-frame="(frameNum) => (currentFrame = frameNum)"
           class="player"
           :src="filename"
-        />
+        /> -->
         <DrawVector
           v-if="isVector"
           @update:frame-to-image-data="(data) => (framesWithSketch = data)"

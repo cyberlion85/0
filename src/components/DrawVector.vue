@@ -1,68 +1,76 @@
 <template>
-  <div id="svg_container">
-    <div style="color: yellow">
-      <div>Before: {{ currentPath.length }}</div>
-      <div>After: {{ simplifiedLenth }}</div>
-    </div>
-    <div style="margin-top: 10px; color: white">
-      <label for="smoothingFactor"
-        >Smoothing Factor: {{ smoothingFactor }}</label
-      >
-      <input
-        type="range"
-        id="smoothingFactor"
-        v-model="smoothingFactor"
-        min="0.1"
-        max="1"
-        step="0.1"
-      />
-      <label for="alphaFactor">Alpha Factor Func: {{ alphaFactor }}</label>
-      <input
-        type="range"
-        id="alphaFactor"
-        v-model="alphaFactor"
-        min="0.1"
-        max="1"
-        step="0.1"
-      />
+  <div id="svg_container" style="position: relative">
+    <div>
+      <div style="color: rgb(232, 16, 16)">
+        <div>Before: {{ currentPath.length }}</div>
+        <div>After: {{ simplifiedLenth }}</div>
+        <div>canvas Mode:{{ canvasMode }}</div>
+      </div>
+      <div style="margin-top: 10px; color: white">
+        <label for="smoothingFactor"
+          >Smoothing Factor: {{ smoothingFactor }}</label
+        >
+        <input
+          type="range"
+          id="smoothingFactor"
+          v-model="smoothingFactor"
+          min="0.1"
+          max="1"
+          step="0.1"
+        />
+        <label for="alphaFactor">Alpha Factor Func: {{ alphaFactor }}</label>
+        <input
+          type="range"
+          id="alphaFactor"
+          v-model="alphaFactor"
+          min="0.1"
+          max="1"
+          step="0.1"
+        />
 
-      <label for="epsilon">Epsilon: {{ epsilon }}</label>
-      <input
-        type="range"
-        id="epsilon"
-        v-model="epsilon"
-        min="0"
-        max="1"
-        step="0.1"
-      />
-    </div>
+        <label for="epsilon">Epsilon: {{ epsilon }}</label>
+        <input
+          type="range"
+          id="epsilon"
+          v-model="epsilon"
+          min="0"
+          max="1"
+          step="0.1"
+        />
+      </div>
 
-    <button @click="(mode = 'draw'), (selectedStrokeWidth = 3)">Draw</button>
-    <button @click="mode = 'move'">Move</button>
-    <button @click="mode = 'delete'">Delete Mode</button>
-    <button @click="(mode = 'drawLine'), (selectedStrokeWidth = 3)">
-      Draw Line
-    </button>
-    <button @click="(mode = 'drawArrow'), (selectedStrokeWidth = 3)">
-      Draw Arrow
-    </button>
-    <button @click="undoLastPath">Undo</button>
-    <button @click="clearCanvas">Clear</button>
-    <select v-model="selectedStrokeWidth">
-      <option value="1">1px</option>
-      <option value="3">3px</option>
-      <option value="5">5px</option>
-      <option value="7">7px</option>
-      <option value="10">10px</option>
-    </select>
-    <input
-      type="color"
-      v-model="selectedColor"
-      v-if="isColorPickerVisible"
-      @change="hideColorPicker"
-    />
-    <button @click="showColorPicker">Change Color</button>
+      <button @click="(mode = 'draw'), (selectedStrokeWidth = 3)">Draw</button>
+      <button @click="mode = 'move'">Move</button>
+      <button @click="mode = 'delete'">Delete Mode</button>
+      <button @click="(mode = 'drawLine'), (selectedStrokeWidth = 3)">
+        Draw Line
+      </button>
+      <button @click="(mode = 'drawArrow'), (selectedStrokeWidth = 3)">
+        Draw Arrow
+      </button>
+      <button @click="undoLastPath">Undo</button>
+      <button @click="clearCanvas">Clear</button>
+      <select v-model="selectedStrokeWidth">
+        <option value="1">1px</option>
+        <option value="3">3px</option>
+        <option value="5">5px</option>
+        <option value="7">7px</option>
+        <option value="10">10px</option>
+      </select>
+      <input
+        type="color"
+        v-model="selectedColor"
+        v-if="isColorPickerVisible"
+        @change="hideColorPicker"
+      />
+      <button @click="showColorPicker">Change Color</button>
+      <button @click="rasterize">Rasterize</button>
+      <button @click="enableEraser">Enable Eraser</button>
+      <button @click="disableEraser">Disable Eraser</button>
+      <button @click="showSvg = !showSvg">Toggle SVG</button>
+    </div>
     <svg
+      v-show="showSvg"
       ref="svgRef"
       class="svg-canvas"
       :width="props.videoWidth"
@@ -91,6 +99,17 @@
         ]"
       />
     </svg>
+
+    <canvas
+      v-show="!showSvg"
+      ref="canvasRef"
+      class="canvas-el"
+      :width="props.videoWidth"
+      :height="props.videoHeight"
+      @mousedown="handleCanvasMouseDown"
+      @mousemove="handleCanvasMouseMove"
+      @mouseup="handleCanvasMouseUp"
+    ></canvas>
   </div>
 </template>
 
@@ -119,6 +138,11 @@ interface Point {
   y: number;
 }
 
+enum canvasEnum {
+  SVG = "svg",
+  CANVAS = "canvas",
+}
+
 const emits = defineEmits(["update:frameToImageData"]);
 
 let mode = ref("draw");
@@ -128,7 +152,7 @@ let isMoving = false;
 let currentPath: Point[] = [];
 let simplifiedPathRes = ref();
 let simplifiedLenth = ref(0);
-let pathStrings: string[] = reactive([]);
+let pathStrings = ref<string[]>([]);
 let selectedPathIndex = ref<number | null>(null); // Make it reactive
 let hoveredPathIndex = ref<number | null>(null);
 let lastX: number | null = null;
@@ -150,8 +174,94 @@ let strokeWidths: number[] = reactive([]); // Толщина для каждог
 let selectedColor = ref("#e1da09"); // Текущий выбранный цвет
 let colors: string[] = reactive([]); // Цвет для каждого пути
 
+const canvasRef = ref<HTMLCanvasElement | null>(null);
+const eraserEnabled = ref(false);
+const eraserSize = ref(10);
+const showSvg = ref(true);
+const canvasMode = ref<canvasEnum>(canvasEnum.SVG);
+
+const rasterize = () => {
+  const svgElement = svgRef.value;
+  const canvasElement = canvasRef.value;
+  if (!canvasElement || !svgElement) return;
+
+  const ctx = canvasElement.getContext("2d");
+  if (!ctx) return;
+
+  const data = new XMLSerializer().serializeToString(svgElement);
+  const svg = new Blob([data], { type: "image/svg+xml;charset=utf-8" });
+  const url = URL.createObjectURL(svg);
+
+  const img = new Image();
+
+  img.onload = () => {
+    ctx.drawImage(img, 0, 0);
+    URL.revokeObjectURL(url);
+
+    // colors.fill("#0000FF"); // #0000FF is the hex code for blue
+    // svgFramesData[props.currentFrame] = pathStrings.value.map(() => "M0 0");
+
+    // // Set the stroke-opacity of all paths to 0 to make them transparent
+    // if (svgRef.value) {
+    //   const paths = svgRef.value.querySelectorAll("path");
+    //   paths.forEach((path) => {
+    //     path.setAttribute("stroke-opacity", "0");
+    //   });
+    // }
+    console.log(pathStrings.value);
+
+    pathStrings.value = [];
+  };
+
+  img.src = url;
+};
+
+const enableEraser = () => {
+  eraserEnabled.value = true;
+};
+
+const disableEraser = () => {
+  eraserEnabled.value = false;
+};
+
+const erase = (x: number, y: number) => {
+  const canvasElement = canvasRef.value;
+  if (!canvasElement) return;
+
+  const ctx = canvasElement.getContext("2d");
+  if (!ctx) return;
+
+  ctx.globalCompositeOperation = "destination-out";
+  ctx.arc(x, y, eraserSize.value, 0, Math.PI * 2, false);
+  ctx.fill();
+};
+
+const handleCanvasMouseDown = (e: MouseEvent) => {
+  if (!eraserEnabled.value) return;
+
+  erase(e.offsetX, e.offsetY);
+};
+
+const handleCanvasMouseMove = (e: MouseEvent) => {
+  if (!eraserEnabled.value) return;
+
+  if (e.buttons !== 1) return;
+
+  erase(e.offsetX, e.offsetY);
+};
+
+const handleCanvasMouseUp = () => {
+  const canvasElement = canvasRef.value;
+  if (!canvasElement || !eraserEnabled.value) return;
+
+  const ctx = canvasElement.getContext("2d");
+  if (!ctx) return;
+
+  ctx.globalCompositeOperation = "source-over";
+};
+
 const saveSvgData = () => {
-  svgFramesData[props.currentFrame] = [...pathStrings];
+  svgFramesData[props.currentFrame] = [...pathStrings.value];
 
   emits("update:frameToImageData", Object.keys(svgFramesData).map(Number));
 };
@@ -167,11 +277,11 @@ const showColorPicker = () => {
 const loadSvgData = () => {
   const data = svgFramesData[props.currentFrame];
   if (data) {
-    pathStrings.length = 0;
-    data.forEach((path) => pathStrings.push(path));
+    pathStrings.value.length = 0;
+    data.forEach((path) => pathStrings.value.push(path));
     // console.log("Loaded SVG data for frame:", props.currentFrame);
   } else {
-    pathStrings.length = 0; // Clear the paths if no data for the frame
+    pathStrings.value.length = 0; // Clear the paths if no data for the frame
     // console.log("No SVG data for frame:", props.currentFrame);
   }
 };
@@ -190,7 +300,7 @@ watch(
 const handleDeleteClick = () => {
   if (mode.value === "delete") {
     if (hoveredPathIndex.value !== null) {
-      pathStrings.splice(hoveredPathIndex.value, 1);
+      pathStrings.value.splice(hoveredPathIndex.value, 1);
       colors.splice(hoveredPathIndex.value, 1);
       strokeWidths.splice(hoveredPathIndex.value, 1);
       hoveredPathIndex.value = null;
@@ -215,18 +325,18 @@ const handleMouseDown = (e: MouseEvent) => {
 
   if (mode.value === "draw") {
     isDrawing = true;
-    pathStrings.push(`M${lastX} ${lastY}`);
+    pathStrings.value.push(`M${lastX} ${lastY}`);
     strokeWidths.push(selectedStrokeWidth.value);
     colors.push(selectedColor.value);
     currentPath = [{ x: lastX, y: lastY }];
   } else if (mode.value === "drawLine") {
     isDrawing = true;
-    pathStrings.push(`M${lastX} ${lastY}`);
+    pathStrings.value.push(`M${lastX} ${lastY}`);
     strokeWidths.push(selectedStrokeWidth.value);
     colors.push(selectedColor.value);
   } else if (mode.value === "drawArrow") {
     isDrawing = true;
-    pathStrings.push(`M${lastX} ${lastY}`);
+    pathStrings.value.push(`M${lastX} ${lastY}`);
     strokeWidths.push(selectedStrokeWidth.value);
     colors.push(selectedColor.value);
   } else if (mode.value === "move") {
@@ -258,7 +368,7 @@ const handleMouseMove = (e: MouseEvent) => {
     simplifiedLenth.value = simplifiedPath.length;
 
     if (simplifiedPath.length) simplifiedPathRes.value = simplifiedPath.length;
-    pathStrings[pathStrings.length - 1] = simplifiedPath
+    pathStrings.value[pathStrings.value.length - 1] = simplifiedPath
       .map(
         ({ x, y }, idx) =>
           `${idx === 0 ? "M" : "L"}${x.toFixed(2)} ${y.toFixed(2)}`
@@ -271,12 +381,14 @@ const handleMouseMove = (e: MouseEvent) => {
     // Создаем стрелку (главная линия плюс две меньшие для кончика стрелки)
     if (lastX && lastY) {
       const arrowString = generateArrowString(lastX, lastY, endX, endY);
-      pathStrings[pathStrings.length - 1] = arrowString;
+      pathStrings.value[pathStrings.value.length - 1] = arrowString;
     }
   } else if (mode.value === "drawLine" && isDrawing) {
     let endX = e.offsetX;
     let endY = e.offsetY;
-    pathStrings[pathStrings.length - 1] = `M${lastX} ${lastY} L${endX} ${endY}`;
+    pathStrings.value[
+      pathStrings.value.length - 1
+    ] = `M${lastX} ${lastY} L${endX} ${endY}`;
   } else if (
     mode.value === "move" &&
     isMoving &&
@@ -287,7 +399,7 @@ const handleMouseMove = (e: MouseEvent) => {
     initialX = e.offsetX;
     initialY = e.offsetY;
 
-    let movedPath = pathStrings[selectedPathIndex.value].replace(
+    let movedPath = pathStrings.value[selectedPathIndex.value].replace(
       /([ML])([\d.]+) ([\d.]+)/g,
       (match, command, x, y) => {
         x = parseFloat(x) + deltaX;
@@ -299,7 +411,7 @@ const handleMouseMove = (e: MouseEvent) => {
         return `${command}${parseFloat(x) - deltaX} ${parseFloat(y) - deltaY}`;
       }
     );
-    pathStrings[selectedPathIndex.value] = movedPath;
+    pathStrings.value[selectedPathIndex.value] = movedPath;
   }
 };
 
@@ -310,15 +422,15 @@ const hoverPath = (index: number) => {
 };
 
 const clearCanvas = () => {
-  pathStrings.length = 0; // Clear all paths
+  pathStrings.value.length = 0; // Clear all paths
   colors.length = 0; // Clear all colors
   strokeWidths.length = 0; // Clear all stroke widths
   saveSvgData();
 };
 
 const undoLastPath = () => {
-  if (pathStrings.length > 0) {
-    pathStrings.pop();
+  if (pathStrings.value.length > 0) {
+    pathStrings.value.pop();
     colors.pop();
     strokeWidths.pop();
     saveSvgData(); // Update the SVG data after removing the last path
@@ -428,7 +540,14 @@ const unhoverPath = () => {
 
 <style scoped>
 .svg-canvas {
-  border: 1px solid rgb(94, 255, 0);
+  border: 5px solid red;
+  opacity: 0.4;
+  position: absolute;
+  z-index: 10;
+}
+.canvas-el {
+  border: 5px dotted blue;
+  position: absolute;
 }
 .highlight {
   stroke: blue;
