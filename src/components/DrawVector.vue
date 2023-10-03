@@ -82,7 +82,7 @@
       <path
         v-for="(pathString, index) in pathStrings"
         :key="index"
-        :d="pathString"
+        :d="pathString.path"
         :stroke="colors[index] || selectedColor"
         :stroke-width="strokeWidths[index] || selectedStrokeWidth"
         fill="none"
@@ -143,6 +143,11 @@ enum canvasEnum {
   CANVAS = "canvas",
 }
 
+interface PathInfo {
+  type: "draw" | "drawLine" | "drawArrow";
+  path: string;
+}
+
 const emits = defineEmits(["update:frameToImageData"]);
 
 let mode = ref("draw");
@@ -152,7 +157,7 @@ let isMoving = false;
 let currentPath: Point[] = [];
 let simplifiedPathRes = ref();
 let simplifiedLenth = ref(0);
-let pathStrings = ref<string[]>([]);
+let pathStrings = ref<PathInfo[]>([]);
 let selectedPathIndex = ref<number | null>(null); // Make it reactive
 let hoveredPathIndex = ref<number | null>(null);
 let lastX: number | null = null;
@@ -166,7 +171,8 @@ const alphaFactor = ref(0.3);
 const epsilon = ref(0.3);
 
 const svgRef = ref<SVGSVGElement | null>(null);
-const svgFramesData: Record<number, string[]> = {};
+const svgFramesData: Record<number, PathInfo[]> = {};
+// const svgFramesData: Record<number, string[]> = {};
 
 let selectedStrokeWidth = ref(3); // Текущая выбранная толщина линии
 let strokeWidths: number[] = reactive([]); // Толщина для каждого пути
@@ -325,18 +331,27 @@ const handleMouseDown = (e: MouseEvent) => {
 
   if (mode.value === "draw") {
     isDrawing = true;
-    pathStrings.value.push(`M${lastX} ${lastY}`);
+    pathStrings.value.push({
+      type: "draw",
+      path: `M${lastX} ${lastY}`,
+    });
     strokeWidths.push(selectedStrokeWidth.value);
     colors.push(selectedColor.value);
     currentPath = [{ x: lastX, y: lastY }];
   } else if (mode.value === "drawLine") {
     isDrawing = true;
-    pathStrings.value.push(`M${lastX} ${lastY}`);
+    pathStrings.value.push({
+      type: "drawLine",
+      path: `M${lastX} ${lastY}`,
+    });
     strokeWidths.push(selectedStrokeWidth.value);
     colors.push(selectedColor.value);
   } else if (mode.value === "drawArrow") {
     isDrawing = true;
-    pathStrings.value.push(`M${lastX} ${lastY}`);
+    pathStrings.value.push({
+      type: "drawArrow",
+      path: `M${lastX} ${lastY}`,
+    });
     strokeWidths.push(selectedStrokeWidth.value);
     colors.push(selectedColor.value);
   } else if (mode.value === "move") {
@@ -368,7 +383,7 @@ const handleMouseMove = (e: MouseEvent) => {
     simplifiedLenth.value = simplifiedPath.length;
 
     if (simplifiedPath.length) simplifiedPathRes.value = simplifiedPath.length;
-    pathStrings.value[pathStrings.value.length - 1] = simplifiedPath
+    pathStrings.value[pathStrings.value.length - 1].path = simplifiedPath
       .map(
         ({ x, y }, idx) =>
           `${idx === 0 ? "M" : "L"}${x.toFixed(2)} ${y.toFixed(2)}`
@@ -381,14 +396,14 @@ const handleMouseMove = (e: MouseEvent) => {
     // Создаем стрелку (главная линия плюс две меньшие для кончика стрелки)
     if (lastX && lastY) {
       const arrowString = generateArrowString(lastX, lastY, endX, endY);
-      pathStrings.value[pathStrings.value.length - 1] = arrowString;
+      pathStrings.value[pathStrings.value.length - 1].path = arrowString;
     }
   } else if (mode.value === "drawLine" && isDrawing) {
     let endX = e.offsetX;
     let endY = e.offsetY;
     pathStrings.value[
       pathStrings.value.length - 1
-    ] = `M${lastX} ${lastY} L${endX} ${endY}`;
+    ].path = `M${lastX} ${lastY} L${endX} ${endY}`;
   } else if (
     mode.value === "move" &&
     isMoving &&
@@ -399,7 +414,7 @@ const handleMouseMove = (e: MouseEvent) => {
     initialX = e.offsetX;
     initialY = e.offsetY;
 
-    let movedPath = pathStrings.value[selectedPathIndex.value].replace(
+    let movedPath = pathStrings.value[selectedPathIndex.value].path.replace(
       /([ML])([\d.]+) ([\d.]+)/g,
       (match, command, x, y) => {
         x = parseFloat(x) + deltaX;
@@ -411,7 +426,7 @@ const handleMouseMove = (e: MouseEvent) => {
         return `${command}${parseFloat(x) - deltaX} ${parseFloat(y) - deltaY}`;
       }
     );
-    pathStrings.value[selectedPathIndex.value] = movedPath;
+    pathStrings.value[selectedPathIndex.value].path = movedPath;
   }
 };
 
