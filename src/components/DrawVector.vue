@@ -83,6 +83,7 @@
         v-for="(pathString, index) in pathStrings"
         :key="index"
         :d="pathString.path"
+        :data-type="pathString.type"
         :stroke="colors[index] || selectedColor"
         :stroke-width="strokeWidths[index] || selectedStrokeWidth"
         fill="none"
@@ -194,7 +195,17 @@ const rasterize = () => {
   const ctx = canvasElement.getContext("2d");
   if (!ctx) return;
 
-  const data = new XMLSerializer().serializeToString(svgElement);
+  const paths = svgElement.querySelectorAll(
+    "path:not([data-type='drawArrow']):not([data-type='drawLine'])"
+  ); // выбираем все пути, кроме стрелок и линий
+  let data = '<svg xmlns="http://www.w3.org/2000/svg">';
+
+  paths.forEach((path) => {
+    data += path.outerHTML;
+  });
+
+  data += "</svg>";
+
   const svg = new Blob([data], { type: "image/svg+xml;charset=utf-8" });
   const url = URL.createObjectURL(svg);
 
@@ -204,23 +215,53 @@ const rasterize = () => {
     ctx.drawImage(img, 0, 0);
     URL.revokeObjectURL(url);
 
-    // colors.fill("#0000FF"); // #0000FF is the hex code for blue
-    // svgFramesData[props.currentFrame] = pathStrings.value.map(() => "M0 0");
+    pathStrings.value = pathStrings.value.filter(
+      (_, index) => !paths[index] // убираем растеризованные пути из массива
+    );
 
-    // // Set the stroke-opacity of all paths to 0 to make them transparent
-    // if (svgRef.value) {
-    //   const paths = svgRef.value.querySelectorAll("path");
-    //   paths.forEach((path) => {
-    //     path.setAttribute("stroke-opacity", "0");
-    //   });
-    // }
-    console.log(pathStrings.value);
-
-    pathStrings.value = [];
+    // Do something with the remaining paths (like arrows) if needed
   };
 
   img.src = url;
 };
+
+// const rasterize = () => {
+//   const svgElement = svgRef.value;
+//   const canvasElement = canvasRef.value;
+//   if (!canvasElement || !svgElement) return;
+
+//   const ctx = canvasElement.getContext("2d");
+//   if (!ctx) return;
+
+//   const data = new XMLSerializer().serializeToString(svgElement);
+//   console.log(svgElement);
+
+//   const svg = new Blob([data], { type: "image/svg+xml;charset=utf-8" });
+//   const url = URL.createObjectURL(svg);
+
+//   const img = new Image();
+
+//   img.onload = () => {
+//     ctx.drawImage(img, 0, 0);
+//     URL.revokeObjectURL(url);
+
+//     // colors.fill("#0000FF"); // #0000FF is the hex code for blue
+//     // svgFramesData[props.currentFrame] = pathStrings.value.map(() => "M0 0");
+
+//     // // Set the stroke-opacity of all paths to 0 to make them transparent
+//     // if (svgRef.value) {
+//     //   const paths = svgRef.value.querySelectorAll("path");
+//     //   paths.forEach((path) => {
+//     //     path.setAttribute("stroke-opacity", "0");
+//     //   });
+//     // }
+//     // console.log(pathStrings.value);
+
+//     pathStrings.value = [];
+//   };
+
+//   img.src = url;
+// };
 
 const enableEraser = () => {
   eraserEnabled.value = true;
