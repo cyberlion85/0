@@ -1,141 +1,72 @@
 <template>
   <div id="svg_container" style="position: relative">
     <div>
-      <div style="color: rgb(232, 16, 16)">
-        <div>Before: {{ currentPath.length }}</div>
-        <div>After: {{ simplifiedLenth }}</div>
-        <div>eraser:{{ eraserEnabled }}</div>
-      </div>
-      <div style="margin-top: 10px; color: white">
-        <label for="smoothingFactor"
-          >Smoothing Factor: {{ smoothingFactor }}</label
-        >
-        <input
-          type="range"
-          id="smoothingFactor"
-          v-model="smoothingFactor"
-          min="0.1"
-          max="1"
-          step="0.1"
+      <svg
+        ref="svgRef"
+        class="svg-canvas"
+        :width="props.videoWidth"
+        :height="props.videoHeight"
+        @mousedown.left="
+          (e) => {
+            if (!eraserEnabled) handleMouseDown(e);
+          }
+        "
+        @mousemove="
+          (e) => {
+            if (!eraserEnabled) handleMouseMove(e);
+          }
+        "
+        @mouseup.left="
+          () => {
+            if (!eraserEnabled) handleMouseUp();
+          }
+        "
+      >
+        <path
+          v-for="(pathString, index) in pathStrings"
+          :key="index"
+          :d="pathString.path"
+          :data-type="pathString.type"
+          :stroke="colors[index] || selectedColor"
+          :stroke-width="strokeWidths[index] || selectedStrokeWidth"
+          fill="none"
+          @mouseover="hoverPath(index)"
+          @mouseout="unhoverPath"
+          :class="[
+            index === hoveredPathIndex
+              ? mode === 'move'
+                ? 'highlight'
+                : mode === 'delete'
+                ? 'highlight-delete'
+                : ''
+              : '',
+          ]"
         />
-        <label for="alphaFactor">Alpha Factor Func: {{ alphaFactor }}</label>
-        <input
-          type="range"
-          id="alphaFactor"
-          v-model="alphaFactor"
-          min="0.1"
-          max="1"
-          step="0.1"
-        />
+      </svg>
 
-        <label for="epsilon">Epsilon: {{ epsilon }}</label>
-        <input
-          type="range"
-          id="epsilon"
-          v-model="epsilon"
-          min="0"
-          max="1"
-          step="0.1"
-        />
-      </div>
-
-      <button @click="(mode = 'draw'), (selectedStrokeWidth = 3)">Draw</button>
-      <button @click="mode = 'move'">Move</button>
-      <button @click="mode = 'delete'">Delete Mode</button>
-      <button @click="(mode = 'drawLine'), (selectedStrokeWidth = 3)">
-        Draw Line
-      </button>
-      <button @click="(mode = 'drawArrow'), (selectedStrokeWidth = 3)">
-        Draw Arrow
-      </button>
-      <button @click="undoLastPath">Undo</button>
-      <button @click="clearCanvas">Clear</button>
-      <select v-model="selectedStrokeWidth">
-        <option value="1">1px</option>
-        <option value="3">3px</option>
-        <option value="5">5px</option>
-        <option value="7">7px</option>
-        <option value="10">10px</option>
-      </select>
-      <input
-        type="color"
-        v-model="selectedColor"
-        v-if="isColorPickerVisible"
-        @change="hideColorPicker"
-      />
-      <button @click="showColorPicker">Change Color</button>
-      <button @click="rasterize">Rasterize</button>
-      <button @click="enableEraser">Eraser</button>
-      <!-- <button @click="disableEraser">Disable Eraser</button> -->
-      <button @click="showSvg = !showSvg">Toggle SVG</button>
+      <canvas
+        ref="canvasRef"
+        class="canvas-el"
+        :style="{ zIndex: eraserEnabled ? 10 : 0 }"
+        :width="props.videoWidth"
+        :height="props.videoHeight"
+        @mousedown="
+          (e) => {
+            if (eraserEnabled) handleCanvasMouseDown(e);
+          }
+        "
+        @mousemove="
+          (e) => {
+            if (eraserEnabled) handleCanvasMouseMove(e);
+          }
+        "
+        @mouseup="
+          () => {
+            if (eraserEnabled) handleCanvasMouseUp();
+          }
+        "
+      ></canvas>
     </div>
-    <svg
-      v-show="showSvg"
-      ref="svgRef"
-      class="svg-canvas"
-      :width="props.videoWidth"
-      :height="props.videoHeight"
-      @mousedown.left="
-        (e) => {
-          if (!eraserEnabled) handleMouseDown(e);
-        }
-      "
-      @mousemove="
-        (e) => {
-          if (!eraserEnabled) handleMouseMove(e);
-        }
-      "
-      @mouseup.left="
-        () => {
-          if (!eraserEnabled) handleMouseUp();
-        }
-      "
-    >
-      <path
-        v-for="(pathString, index) in pathStrings"
-        :key="index"
-        :d="pathString.path"
-        :data-type="pathString.type"
-        :stroke="colors[index] || selectedColor"
-        :stroke-width="strokeWidths[index] || selectedStrokeWidth"
-        fill="none"
-        @mouseover="hoverPath(index)"
-        @mouseout="unhoverPath"
-        :class="[
-          index === hoveredPathIndex
-            ? mode === 'move'
-              ? 'highlight'
-              : mode === 'delete'
-              ? 'highlight-delete'
-              : ''
-            : '',
-        ]"
-      />
-    </svg>
-
-    <canvas
-      v-show="showSvg"
-      ref="canvasRef"
-      class="canvas-el"
-      :style="{ zIndex: eraserEnabled ? 10 : 0 }"
-      :width="props.videoWidth"
-      :height="props.videoHeight"
-      @mousedown="
-        (e) => {
-          if (eraserEnabled) handleCanvasMouseDown(e);
-        }
-      "
-      @mousemove="
-        (e) => {
-          if (eraserEnabled) handleCanvasMouseMove(e);
-        }
-      "
-      @mouseup="
-        () => {
-          if (eraserEnabled) handleCanvasMouseUp();
-        }
-      "
-    ></canvas>
   </div>
 </template>
 
@@ -155,6 +86,8 @@ const props = withDefaults(
     currentFrame: number;
     videoHeight: number;
     videoWidth: number;
+    mode: string;
+    isErase: boolean;
   }>(),
   { currentFrame: 0 }
 );
@@ -176,7 +109,7 @@ interface PathInfo {
 
 const emits = defineEmits(["update:frameToImageData"]);
 
-let mode = ref("draw");
+// let mode = ref("draw");
 const isColorPickerVisible = ref(false);
 let isDrawing = false;
 let isMoving = false;
@@ -209,8 +142,6 @@ let colors: string[] = reactive([]); // Цвет для каждого пути
 const canvasRef = ref<HTMLCanvasElement | null>(null);
 const eraserEnabled = ref(false);
 const eraserSize = ref(10);
-const showSvg = ref(true);
-// const canvasMode = ref<canvasEnum>(canvasEnum.SVG);
 
 const rasterize = () => {
   const svgElement = svgRef.value;
@@ -231,8 +162,6 @@ const rasterize = () => {
 
   data += "</svg>";
 
-  console.log(data);
-
   const svg = new Blob([data], { type: "image/svg+xml;charset=utf-8" });
   const url = URL.createObjectURL(svg);
 
@@ -247,9 +176,14 @@ const rasterize = () => {
 
   img.src = url;
 };
-const enableEraser = () => {
-  eraserEnabled.value = !eraserEnabled.value;
-};
+// const enableEraser = () => {
+//   eraserEnabled.value = !eraserEnabled.value;
+// };
+
+watch(
+  () => props.isErase,
+  (val) => (eraserEnabled.value = val)
+);
 
 const erase = (x: number, y: number) => {
   const canvasElement = canvasRef.value;
@@ -326,7 +260,7 @@ watch(
 );
 
 const handleDeleteClick = () => {
-  if (mode.value === "delete") {
+  if (props.mode === "delete") {
     if (hoveredPathIndex.value !== null) {
       pathStrings.value.splice(hoveredPathIndex.value, 1);
       colors.splice(hoveredPathIndex.value, 1);
@@ -353,7 +287,7 @@ const handleMouseDown = (e: MouseEvent) => {
   lastX = e.offsetX;
   lastY = e.offsetY;
 
-  if (mode.value === "draw") {
+  if (props.mode === "draw") {
     isDrawing = true;
     pathStrings.value.push({
       type: "draw",
@@ -362,7 +296,7 @@ const handleMouseDown = (e: MouseEvent) => {
     strokeWidths.push(selectedStrokeWidth.value);
     colors.push(selectedColor.value);
     currentPath = [{ x: lastX, y: lastY }];
-  } else if (mode.value === "drawLine") {
+  } else if (props.mode === "drawLine") {
     isDrawing = true;
     pathStrings.value.push({
       type: "drawLine",
@@ -370,7 +304,7 @@ const handleMouseDown = (e: MouseEvent) => {
     });
     strokeWidths.push(selectedStrokeWidth.value);
     colors.push(selectedColor.value);
-  } else if (mode.value === "drawArrow") {
+  } else if (props.mode === "drawArrow") {
     isDrawing = true;
     pathStrings.value.push({
       type: "drawArrow",
@@ -378,7 +312,9 @@ const handleMouseDown = (e: MouseEvent) => {
     });
     strokeWidths.push(selectedStrokeWidth.value);
     colors.push(selectedColor.value);
-  } else if (mode.value === "move") {
+  } else if (props.mode === "move") {
+    console.log("vv");
+
     isMoving = true;
     selectedPathIndex.value = hoveredPathIndex.value;
     initialX = e.offsetX;
@@ -386,7 +322,7 @@ const handleMouseDown = (e: MouseEvent) => {
   }
 };
 const handleMouseMove = (e: MouseEvent) => {
-  if (mode.value === "draw" && isDrawing && lastX !== null && lastY !== null) {
+  if (props.mode === "draw" && isDrawing && lastX !== null && lastY !== null) {
     const newX = lastX + (e.offsetX - lastX) * smoothingFactor.value;
     const newY = lastY + (e.offsetY - lastY) * smoothingFactor.value;
 
@@ -413,7 +349,7 @@ const handleMouseMove = (e: MouseEvent) => {
           `${idx === 0 ? "M" : "L"}${x.toFixed(2)} ${y.toFixed(2)}`
       )
       .join(" ");
-  } else if (mode.value === "drawArrow" && isDrawing) {
+  } else if (props.mode === "drawArrow" && isDrawing) {
     let endX = e.offsetX;
     let endY = e.offsetY;
 
@@ -422,17 +358,19 @@ const handleMouseMove = (e: MouseEvent) => {
       const arrowString = generateArrowString(lastX, lastY, endX, endY);
       pathStrings.value[pathStrings.value.length - 1].path = arrowString;
     }
-  } else if (mode.value === "drawLine" && isDrawing) {
+  } else if (props.mode === "drawLine" && isDrawing) {
     let endX = e.offsetX;
     let endY = e.offsetY;
     pathStrings.value[
       pathStrings.value.length - 1
     ].path = `M${lastX} ${lastY} L${endX} ${endY}`;
   } else if (
-    mode.value === "move" &&
+    props.mode === "move" &&
     isMoving &&
     selectedPathIndex.value !== null
   ) {
+    console.log(props.mode);
+
     deltaX = e.offsetX - initialX;
     deltaY = e.offsetY - initialY;
     initialX = e.offsetX;
@@ -455,7 +393,7 @@ const handleMouseMove = (e: MouseEvent) => {
 };
 
 const hoverPath = (index: number) => {
-  if (mode.value === "move" || mode.value === "delete") {
+  if (props.mode === "move" || props.mode === "delete") {
     hoveredPathIndex.value = index;
   }
 };

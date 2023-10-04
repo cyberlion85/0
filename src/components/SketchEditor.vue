@@ -1,13 +1,23 @@
 <template>
   <div>
-    <button :disabled="!isVector" @click="isVector = false">Raster</button>
-    <button :disabled="isVector" @click="isVector = true">Vector</button>
+    <div>
+      <!-- mode {{ mode }} -->
+
+      <CanvasControls
+        @draw="mode = 'draw'"
+        @draw-line="mode = 'drawLine'"
+        @draw-arrow="mode = 'drawArrow'"
+        @move="mode = 'move'"
+        @delete="mode = 'delete'"
+        @erase="isErase = !isErase"
+      ></CanvasControls>
+    </div>
     <draggableElement
       ><div
         class="video-draw-container"
         :style="{ height: videoHeight + 'px', width: videoWidth + 'px' }"
       >
-        <!-- <VideoPlayer
+        <VideoPlayer
           ref="videoPlayerRef"
           :next-frame="isNextFrame"
           :prev-frame="isPrevFrame"
@@ -18,7 +28,7 @@
           @current-frame="(frameNum) => (currentFrame = frameNum)"
           class="player"
           :src="filename"
-        /> -->
+        />
         <DrawVector
           v-if="isVector"
           @update:frame-to-image-data="(data) => (framesWithSketch = data)"
@@ -27,6 +37,8 @@
           class="canvas"
           :video-height="videoHeight"
           :video-width="videoWidth"
+          :mode="mode"
+          :is-erase="isErase"
         />
         <DrawCanvas
           v-if="!isVector"
@@ -63,6 +75,10 @@ import DrawCanvas from "./DrawCanvas.vue";
 import DrawVector from "./DrawVector.vue";
 import draggableElement from "./draggableElement.vue";
 import TimeLine from "./TimeLine.vue";
+import CanvasControls from "./CanvasControls.vue";
+
+const mode = ref<string>("draw");
+const isErase = ref(false);
 
 const videoPlayerRef = ref(null);
 const isVector = ref(true);

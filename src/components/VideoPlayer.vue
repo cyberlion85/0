@@ -138,7 +138,7 @@ const stepBackward = () => {
 
 const setFrame = (frameNumber: number) => {
   if (videoRef.value) {
-    console.log("set frame call");
+    // console.log("set frame call");
 
     const targetTime = frameNumber / FPS;
     // вычитаем половину длинн фрейма чтобы попасть в центр кадра
