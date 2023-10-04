@@ -4,7 +4,7 @@
       <div style="color: rgb(232, 16, 16)">
         <div>Before: {{ currentPath.length }}</div>
         <div>After: {{ simplifiedLenth }}</div>
-        <div>canvas Mode:{{ canvasMode }}</div>
+        <div>eraser:{{ eraserEnabled }}</div>
       </div>
       <div style="margin-top: 10px; color: white">
         <label for="smoothingFactor"
@@ -65,8 +65,8 @@
       />
       <button @click="showColorPicker">Change Color</button>
       <button @click="rasterize">Rasterize</button>
-      <button @click="enableEraser">Enable Eraser</button>
-      <button @click="disableEraser">Disable Eraser</button>
+      <button @click="enableEraser">Eraser</button>
+      <!-- <button @click="disableEraser">Disable Eraser</button> -->
       <button @click="showSvg = !showSvg">Toggle SVG</button>
     </div>
     <svg
@@ -75,9 +75,21 @@
       class="svg-canvas"
       :width="props.videoWidth"
       :height="props.videoHeight"
-      @mousedown.left="handleMouseDown"
-      @mousemove="handleMouseMove"
-      @mouseup.left="handleMouseUp"
+      @mousedown.left="
+        (e) => {
+          if (!eraserEnabled) handleMouseDown(e);
+        }
+      "
+      @mousemove="
+        (e) => {
+          if (!eraserEnabled) handleMouseMove(e);
+        }
+      "
+      @mouseup.left="
+        () => {
+          if (!eraserEnabled) handleMouseUp();
+        }
+      "
     >
       <path
         v-for="(pathString, index) in pathStrings"
@@ -102,14 +114,27 @@
     </svg>
 
     <canvas
-      v-show="!showSvg"
+      v-show="showSvg"
       ref="canvasRef"
       class="canvas-el"
+      :style="{ zIndex: eraserEnabled ? 10 : 0 }"
       :width="props.videoWidth"
       :height="props.videoHeight"
-      @mousedown="handleCanvasMouseDown"
-      @mousemove="handleCanvasMouseMove"
-      @mouseup="handleCanvasMouseUp"
+      @mousedown="
+        (e) => {
+          if (eraserEnabled) handleCanvasMouseDown(e);
+        }
+      "
+      @mousemove="
+        (e) => {
+          if (eraserEnabled) handleCanvasMouseMove(e);
+        }
+      "
+      @mouseup="
+        () => {
+          if (eraserEnabled) handleCanvasMouseUp();
+        }
+      "
     ></canvas>
   </div>
 </template>
@@ -264,11 +289,7 @@ const rasterize = () => {
 // };
 
 const enableEraser = () => {
-  eraserEnabled.value = true;
-};
-
-const disableEraser = () => {
-  eraserEnabled.value = false;
+  eraserEnabled.value = !eraserEnabled.value;
 };
 
 const erase = (x: number, y: number) => {
@@ -278,9 +299,10 @@ const erase = (x: number, y: number) => {
   const ctx = canvasElement.getContext("2d");
   if (!ctx) return;
 
-  ctx.globalCompositeOperation = "destination-out";
-  ctx.arc(x, y, eraserSize.value, 0, Math.PI * 2, false);
-  ctx.fill();
+  // ctx.globalCompositeOperation = "destination-out";
+  // ctx.arc(x, y, eraserSize.value, 0, Math.PI * 2, false);
+  // ctx.fill();
+  ctx.clearRect(x, y, eraserSize.value, eraserSize.value);
 };
 
 const handleCanvasMouseDown = (e: MouseEvent) => {
@@ -363,6 +385,8 @@ const handleMouseUp = () => {
   lastY = null;
   currentPath = [];
   saveSvgData();
+
+  rasterize();
 
   handleDeleteClick();
 };
@@ -599,11 +623,12 @@ const unhoverPath = () => {
   border: 5px solid red;
   opacity: 0.4;
   position: absolute;
-  z-index: 10;
+  z-index: 1;
 }
 .canvas-el {
   border: 5px dotted blue;
   position: absolute;
+  /* z-index: 0; */
 }
 .highlight {
   stroke: blue;
