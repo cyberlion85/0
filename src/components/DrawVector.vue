@@ -164,10 +164,10 @@ interface Point {
   y: number;
 }
 
-enum canvasEnum {
-  SVG = "svg",
-  CANVAS = "canvas",
-}
+// enum canvasEnum {
+//   SVG = "svg",
+//   CANVAS = "canvas",
+// }
 
 interface PathInfo {
   type: "draw" | "drawLine" | "drawArrow";
@@ -210,7 +210,7 @@ const canvasRef = ref<HTMLCanvasElement | null>(null);
 const eraserEnabled = ref(false);
 const eraserSize = ref(10);
 const showSvg = ref(true);
-const canvasMode = ref<canvasEnum>(canvasEnum.SVG);
+// const canvasMode = ref<canvasEnum>(canvasEnum.SVG);
 
 const rasterize = () => {
   const svgElement = svgRef.value;
@@ -222,14 +222,16 @@ const rasterize = () => {
 
   const paths = svgElement.querySelectorAll(
     "path:not([data-type='drawArrow']):not([data-type='drawLine'])"
-  ); // выбираем все пути, кроме стрелок и линий
-  let data = '<svg xmlns="http://www.w3.org/2000/svg">';
+  );
+  let data = `<svg xmlns="http://www.w3.org/2000/svg" width="${canvasElement.width}" height="${canvasElement.height}">`;
 
   paths.forEach((path) => {
     data += path.outerHTML;
   });
 
   data += "</svg>";
+
+  console.log(data);
 
   const svg = new Blob([data], { type: "image/svg+xml;charset=utf-8" });
   const url = URL.createObjectURL(svg);
@@ -240,54 +242,11 @@ const rasterize = () => {
     ctx.drawImage(img, 0, 0);
     URL.revokeObjectURL(url);
 
-    pathStrings.value = pathStrings.value.filter(
-      (_, index) => !paths[index] // убираем растеризованные пути из массива
-    );
-
-    // Do something with the remaining paths (like arrows) if needed
+    pathStrings.value = pathStrings.value.filter((_, index) => !paths[index]);
   };
 
   img.src = url;
 };
-
-// const rasterize = () => {
-//   const svgElement = svgRef.value;
-//   const canvasElement = canvasRef.value;
-//   if (!canvasElement || !svgElement) return;
-
-//   const ctx = canvasElement.getContext("2d");
-//   if (!ctx) return;
-
-//   const data = new XMLSerializer().serializeToString(svgElement);
-//   console.log(svgElement);
-
-//   const svg = new Blob([data], { type: "image/svg+xml;charset=utf-8" });
-//   const url = URL.createObjectURL(svg);
-
-//   const img = new Image();
-
-//   img.onload = () => {
-//     ctx.drawImage(img, 0, 0);
-//     URL.revokeObjectURL(url);
-
-//     // colors.fill("#0000FF"); // #0000FF is the hex code for blue
-//     // svgFramesData[props.currentFrame] = pathStrings.value.map(() => "M0 0");
-
-//     // // Set the stroke-opacity of all paths to 0 to make them transparent
-//     // if (svgRef.value) {
-//     //   const paths = svgRef.value.querySelectorAll("path");
-//     //   paths.forEach((path) => {
-//     //     path.setAttribute("stroke-opacity", "0");
-//     //   });
-//     // }
-//     // console.log(pathStrings.value);
-
-//     pathStrings.value = [];
-//   };
-
-//   img.src = url;
-// };
-
 const enableEraser = () => {
   eraserEnabled.value = !eraserEnabled.value;
 };
