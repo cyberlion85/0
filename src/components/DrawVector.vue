@@ -79,6 +79,7 @@ import {
   defineEmits,
   defineExpose,
   watch,
+  onMounted,
 } from "vue";
 
 const props = withDefaults(
@@ -107,10 +108,10 @@ interface PathInfo {
   path: string;
 }
 
-const emits = defineEmits(["update:frameToImageData"]);
+const emits = defineEmits(["update:framesWithData"]);
 
 // let mode = ref("draw");
-const isColorPickerVisible = ref(false);
+// const isColorPickerVisible = ref(false);
 let isDrawing = false;
 let isMoving = false;
 let currentPath: Point[] = [];
@@ -131,7 +132,8 @@ const epsilon = ref(0.3);
 
 const svgRef = ref<SVGSVGElement | null>(null);
 const svgFramesData: Record<number, PathInfo[]> = {};
-// const svgFramesData: Record<number, string[]> = {};
+const rasterFramesData = ref<Record<number, string>>({});
+let ctx: CanvasRenderingContext2D | null = null;
 
 let selectedStrokeWidth = ref(3); // Текущая выбранная толщина линии
 let strokeWidths: number[] = reactive([]); // Толщина для каждого пути
@@ -143,42 +145,56 @@ const canvasRef = ref<HTMLCanvasElement | null>(null);
 const eraserEnabled = ref(false);
 const eraserSize = ref(10);
 
+onMounted(() => {
+  if (canvasRef.value) {
+    ctx = canvasRef.value.getContext("2d");
+  }
+});
+
 const rasterize = () => {
-  const svgElement = svgRef.value;
-  const canvasElement = canvasRef.value;
-  if (!canvasElement || !svgElement) return;
+  return new Promise<void>((resolve, reject) => {
+    const svgElement = svgRef.value;
+    const canvasElement = canvasRef.value;
+    if (!canvasElement || !svgElement) {
+      reject(new Error("SVG or Canvas element is not available"));
+      return;
+    }
 
-  const ctx = canvasElement.getContext("2d");
-  if (!ctx) return;
+    if (!ctx) {
+      reject(new Error("Canvas context is not available"));
+      return;
+    }
 
-  const paths = svgElement.querySelectorAll(
-    "path:not([data-type='drawArrow']):not([data-type='drawLine'])"
-  );
-  let data = `<svg xmlns="http://www.w3.org/2000/svg" width="${canvasElement.width}" height="${canvasElement.height}">`;
+    const paths = svgElement.querySelectorAll(
+      "path:not([data-type='drawArrow']):not([data-type='drawLine'])"
+    );
 
-  paths.forEach((path) => {
-    data += path.outerHTML;
+    let data = `<svg xmlns="http://www.w3.org/2000/svg" width="${canvasElement.width}" height="${canvasElement.height}">`;
+
+    paths.forEach((path) => {
+      data += path.outerHTML;
+    });
+
+    data += "</svg>";
+
+    const svg = new Blob([data], { type: "image/svg+xml;charset=utf-8" });
+    const url = URL.createObjectURL(svg);
+
+    const img = new Image();
+
+    img.onload = () => {
+      ctx?.drawImage(img, 0, 0);
+      URL.revokeObjectURL(url);
+      resolve();
+    };
+
+    img.onerror = () => {
+      reject(new Error("Image loading failed"));
+    };
+
+    img.src = url;
   });
-
-  data += "</svg>";
-
-  const svg = new Blob([data], { type: "image/svg+xml;charset=utf-8" });
-  const url = URL.createObjectURL(svg);
-
-  const img = new Image();
-
-  img.onload = () => {
-    ctx.drawImage(img, 0, 0);
-    URL.revokeObjectURL(url);
-
-    pathStrings.value = pathStrings.value.filter((_, index) => !paths[index]);
-  };
-
-  img.src = url;
 };
-// const enableEraser = () => {
-//   eraserEnabled.value = !eraserEnabled.value;
-// };
 
 watch(
   () => props.isErase,
@@ -192,10 +208,8 @@ const erase = (x: number, y: number) => {
   const ctx = canvasElement.getContext("2d");
   if (!ctx) return;
 
-  // ctx.globalCompositeOperation = "destination-out";
-  // ctx.arc(x, y, eraserSize.value, 0, Math.PI * 2, false);
-  // ctx.fill();
   ctx.clearRect(x, y, eraserSize.value, eraserSize.value);
+  saveSvgAndVectorData();
 };
 
 const handleCanvasMouseDown = (e: MouseEvent) => {
@@ -215,47 +229,90 @@ const handleCanvasMouseMove = (e: MouseEvent) => {
 const handleCanvasMouseUp = () => {
   const canvasElement = canvasRef.value;
   if (!canvasElement || !eraserEnabled.value) return;
-
   const ctx = canvasElement.getContext("2d");
   if (!ctx) return;
-
   ctx.globalCompositeOperation = "source-over";
 };
 
-const saveSvgData = () => {
-  svgFramesData[props.currentFrame] = [...pathStrings.value];
+const saveSvgAndVectorData = () => {
+  // console.log("save call");
 
-  emits("update:frameToImageData", Object.keys(svgFramesData).map(Number));
+  // сносим все вевторные рисовалки после растеризации
+  // TODO move to rasterize
+
+  pathStrings.value = pathStrings.value.filter((path) => path.type != "draw");
+  if (pathStrings.value.length > 0) {
+    svgFramesData[props.currentFrame] = [...pathStrings.value];
+  }
+  if (canvasRef.value) {
+    const dataURL = canvasRef.value.toDataURL("image/png");
+
+    rasterFramesData.value[props.currentFrame] = dataURL;
+    // console.log(dataURL);
+  }
+  const framesWithData = Array.from(
+    new Set(
+      [
+        Object.keys(svgFramesData).map(Number),
+        ...Object.keys(rasterFramesData.value).map(Number),
+      ].flatMap((el) => el)
+    )
+  );
+
+  console.log(framesWithData);
+
+  emits("update:framesWithData", framesWithData);
 };
 
-const hideColorPicker = () => {
-  isColorPickerVisible.value = false;
-};
-
-const showColorPicker = () => {
-  isColorPickerVisible.value = true;
-};
-
-const loadSvgData = () => {
-  const data = svgFramesData[props.currentFrame];
-  if (data) {
+const loadSvgAndVectorData = () => {
+  const svgData = svgFramesData[props.currentFrame];
+  if (svgData) {
     pathStrings.value.length = 0;
-    data.forEach((path) => pathStrings.value.push(path));
+    svgData.forEach((path) => pathStrings.value.push(path));
     // console.log("Loaded SVG data for frame:", props.currentFrame);
   } else {
     pathStrings.value.length = 0; // Clear the paths if no data for the frame
     // console.log("No SVG data for frame:", props.currentFrame);
   }
+
+  const rasterData = rasterFramesData.value[props.currentFrame];
+  const canvasElement = canvasRef.value;
+  if (ctx) clearArea(ctx);
+
+  if (rasterData && canvasElement) {
+    // console.log(rasterData);
+
+    const ctx = canvasElement.getContext("2d");
+    // console.log(rasterFramesData.value);
+
+    const img = new Image();
+    img.onload = () => {
+      if (ctx) {
+        // console.log("ctx");
+        // console.log(img);
+        // ctx.clearRect(0, 0, canvasElement.width, canvasElement.height); // Очищаем холст перед отрисовкой нового изображения
+        ctx.drawImage(img, 0, 0);
+      }
+    };
+    img.src = rasterData;
+  }
 };
 defineExpose({
-  saveSvgData,
-  loadSvgData,
+  saveSvgAndVectorData,
+  loadSvgAndVectorData,
 });
+
+const clearArea = (ctx: CanvasRenderingContext2D) => {
+  if (ctx) {
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+  }
+};
 
 watch(
   () => props.currentFrame,
   () => {
-    loadSvgData();
+    loadSvgAndVectorData();
   }
 );
 
@@ -266,20 +323,21 @@ const handleDeleteClick = () => {
       colors.splice(hoveredPathIndex.value, 1);
       strokeWidths.splice(hoveredPathIndex.value, 1);
       hoveredPathIndex.value = null;
-      saveSvgData();
+      saveSvgAndVectorData();
     }
   }
 };
 
-const handleMouseUp = () => {
+const handleMouseUp = async () => {
   isDrawing = false;
   isMoving = false;
   lastX = null;
   lastY = null;
   currentPath = [];
-  saveSvgData();
 
-  rasterize();
+  await rasterize();
+
+  saveSvgAndVectorData();
 
   handleDeleteClick();
 };
@@ -402,7 +460,7 @@ const clearCanvas = () => {
   pathStrings.value.length = 0; // Clear all paths
   colors.length = 0; // Clear all colors
   strokeWidths.length = 0; // Clear all stroke widths
-  saveSvgData();
+  saveSvgAndVectorData();
 };
 
 const undoLastPath = () => {
@@ -410,7 +468,7 @@ const undoLastPath = () => {
     pathStrings.value.pop();
     colors.pop();
     strokeWidths.pop();
-    saveSvgData(); // Update the SVG data after removing the last path
+    saveSvgAndVectorData(); // Update the SVG data after removing the last path
   }
 };
 

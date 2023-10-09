@@ -31,7 +31,7 @@
         />
         <DrawVector
           v-if="isVector"
-          @update:frame-to-image-data="(data) => (framesWithSketch = data)"
+          @update:frames-with-data="(data) => (framesWithSketch = data)"
           :currentFrame="currentFrame"
           ref="canvasRef"
           class="canvas"
