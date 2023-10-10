@@ -5,8 +5,9 @@
     <button @click="emit('drawArrow')">Arrow</button>
     <button @click="emit('erase')">Erase</button>
     <button @click="emit('move')">Move</button>
-    <button @click="emit('undo')">!!Undo!!</button>
-    <button @click="emit('clear')">!!Clear!!</button>
+    <!-- переделать на define expose -->
+    <button @click="emit('undo')">Undo</button>
+    <button @click="emit('clear')">Clear</button>
     <button @click="emit('delete')">Delete Vector</button>
 
     <input

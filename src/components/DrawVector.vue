@@ -1,7 +1,5 @@
 <template>
   <div id="svg_container" style="position: relative">
-    <button @click="undo">undo</button>
-
     <div>
       <svg
         ref="svgRef"
@@ -91,6 +89,8 @@ const props = withDefaults(
     videoWidth: number;
     mode: string;
     isErase: boolean;
+    isUndo: boolean;
+    selectedColor: string;
   }>(),
   { currentFrame: 0 }
 );
@@ -100,17 +100,12 @@ interface Point {
   y: number;
 }
 
-// enum canvasEnum {
-//   SVG = "svg",
-//   CANVAS = "canvas",
-// }
-
 interface PathInfo {
   type: "draw" | "drawLine" | "drawArrow";
   path: string;
 }
 
-const emits = defineEmits(["update:framesWithData"]);
+const emits = defineEmits(["update:framesWithData", "resetUndoClick"]);
 
 // let mode = ref("draw");
 // const isColorPickerVisible = ref(false);
@@ -140,12 +135,14 @@ let ctx: CanvasRenderingContext2D | null = null;
 let selectedStrokeWidth = ref(3); // Текущая выбранная толщина линии
 let strokeWidths: number[] = reactive([]); // Толщина для каждого пути
 
-let selectedColor = ref("#e1da09"); // Текущий выбранный цвет
+// let selectedColor = ref("#e1da09"); // Текущий выбранный цвет
 let colors: string[] = reactive([]); // Цвет для каждого пути
 
 const canvasRef = ref<HTMLCanvasElement | null>(null);
 const eraserEnabled = ref(false);
 const eraserSize = ref(10);
+
+const historyStack = ref<{ canvasData: string; svgData: PathInfo[] }[]>([]);
 
 onMounted(() => {
   if (canvasRef.value) {
@@ -153,17 +150,37 @@ onMounted(() => {
   }
 });
 
-const historyStack = ref<{ canvasData: string; svgData: PathInfo[] }[]>([]);
+watch(
+  () => props.isUndo,
+  (val) => {
+    if (val) undo();
+    emits("resetUndoClick");
+  }
+);
+watch(
+  () => props.currentFrame,
+  () => {
+    loadSvgAndVectorData();
+    historyStack.value.length = 0;
+  }
+);
+watch(
+  () => props.isErase,
+  (val) => (eraserEnabled.value = val)
+);
+watch(
+  () => props.selectedColor,
+  (v) => console.log(colors)
+);
 
 const undo = () => {
+  // console.log("undo clicked");
+
   if (historyStack.value.length <= 1) return;
 
   historyStack.value.pop();
 
   const previousState = historyStack.value[historyStack.value.length - 1];
-
-  // // Логирование для отладки
-  // console.log("Undo to state:", previousState.svgData[0].path);
 
   pathStrings.value = previousState.svgData;
   rasterFramesData.value[props.currentFrame] = previousState.canvasData;
@@ -326,10 +343,6 @@ const loadSvgAndVectorData = () => {
     img.src = rasterData;
   }
 };
-defineExpose({
-  saveSvgAndVectorData,
-  loadSvgAndVectorData,
-});
 
 const clearArea = (ctx: CanvasRenderingContext2D) => {
   if (ctx) {
@@ -337,18 +350,6 @@ const clearArea = (ctx: CanvasRenderingContext2D) => {
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
   }
 };
-
-watch(
-  () => props.currentFrame,
-  () => {
-    loadSvgAndVectorData();
-    historyStack.value.length = 0;
-  }
-);
-watch(
-  () => props.isErase,
-  (val) => (eraserEnabled.value = val)
-);
 
 const handleDeleteClick = () => {
   if (props.mode === "delete") {
@@ -386,7 +387,7 @@ const handleMouseDown = (e: MouseEvent) => {
       path: `M${lastX} ${lastY}`,
     });
     strokeWidths.push(selectedStrokeWidth.value);
-    colors.push(selectedColor.value);
+    colors.push(props.selectedColor);
     currentPath = [{ x: lastX, y: lastY }];
   } else if (props.mode === "drawLine") {
     isDrawing = true;
@@ -395,7 +396,7 @@ const handleMouseDown = (e: MouseEvent) => {
       path: `M${lastX} ${lastY}`,
     });
     strokeWidths.push(selectedStrokeWidth.value);
-    colors.push(selectedColor.value);
+    colors.push(props.selectedColor);
   } else if (props.mode === "drawArrow") {
     isDrawing = true;
     pathStrings.value.push({
@@ -403,7 +404,7 @@ const handleMouseDown = (e: MouseEvent) => {
       path: `M${lastX} ${lastY}`,
     });
     strokeWidths.push(selectedStrokeWidth.value);
-    colors.push(selectedColor.value);
+    colors.push(props.selectedColor);
   } else if (props.mode === "move") {
     isMoving = true;
     selectedPathIndex.value = hoveredPathIndex.value;
@@ -489,21 +490,13 @@ const hoverPath = (index: number) => {
   }
 };
 
-const clearCanvas = () => {
+const clearScreen = () => {
   pathStrings.value.length = 0; // Clear all paths
   colors.length = 0; // Clear all colors
   strokeWidths.length = 0; // Clear all stroke widths
+  if (ctx) clearArea(ctx);
   saveSvgAndVectorData();
 };
-
-// const undoLastPath = () => {
-//   if (pathStrings.value.length > 0) {
-//     pathStrings.value.pop();
-//     colors.pop();
-//     strokeWidths.pop();
-//     saveSvgAndVectorData(); // Update the SVG data after removing the last path
-//   }
-// };
 
 const ramerDouglasPeucker = (points: Point[], epsilon: number): Point[] => {
   let dmax = 0;
@@ -604,6 +597,11 @@ const generateArrowString = (
 const unhoverPath = () => {
   hoveredPathIndex.value = null;
 };
+defineExpose({
+  saveSvgAndVectorData,
+  loadSvgAndVectorData,
+  clearScreen,
+});
 </script>
 
 <style scoped>

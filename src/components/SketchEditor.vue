@@ -9,7 +9,10 @@
         @draw-arrow="mode = 'drawArrow'"
         @move="mode = 'move'"
         @delete="mode = 'delete'"
+        @undo="isUndo = true"
         @erase="isErase = !isErase"
+        @clear="clear()"
+        @color-change="(color) => test(color)"
       ></CanvasControls>
     </div>
     <draggableElement
@@ -39,6 +42,9 @@
           :video-width="videoWidth"
           :mode="mode"
           :is-erase="isErase"
+          :is-undo="isUndo"
+          :selected-color="selectedColor"
+          @reset-undo-click="isUndo = false"
         />
         <DrawCanvas
           v-if="!isVector"
@@ -77,12 +83,23 @@ import draggableElement from "./draggableElement.vue";
 import TimeLine from "./TimeLine.vue";
 import CanvasControls from "./CanvasControls.vue";
 
+const test = (a) => {
+  // console.log(a);
+
+  selectedColor.value = a;
+  // console.log(selectedColor);
+};
+
 const mode = ref<string>("draw");
 const isErase = ref(false);
+const isUndo = ref(false);
 
 const videoPlayerRef = ref(null);
 const isVector = ref(true);
-const canvasRef = ref<null>(null);
+const canvasRef = ref<ExtendedHTMLCanvasElement | null>(null);
+interface ExtendedHTMLCanvasElement extends HTMLCanvasElement {
+  clearScreen: () => void;
+}
 
 const isPlaying = ref(false);
 const currentFrame = ref(0);
@@ -91,6 +108,7 @@ const isNextFrame = ref(false);
 const isPrevFrame = ref(false);
 const framesWithSketch = ref([]);
 const selectedFrame = ref<number | null>(null);
+const selectedColor = ref("blue");
 
 const filename = "/sample_movie.mp4";
 const videoHeight = 534;
@@ -98,6 +116,9 @@ const videoWidth = 1280;
 // const filename = "/24.mov";
 // const videoHeight = 768;
 // const videoWidth = 1366;
+const clear = () => {
+  canvasRef.value?.clearScreen();
+};
 </script>
 
 <style scoped>
