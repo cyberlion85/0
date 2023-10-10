@@ -1,5 +1,7 @@
 <template>
   <div id="svg_container" style="position: relative">
+    <button @click="undo">undo</button>
+
     <div>
       <svg
         ref="svgRef"
@@ -151,6 +153,25 @@ onMounted(() => {
   }
 });
 
+const historyStack = ref<{ canvasData: string; svgData: PathInfo[] }[]>([]);
+
+const undo = () => {
+  if (historyStack.value.length <= 1) return;
+
+  historyStack.value.pop();
+
+  const previousState = historyStack.value[historyStack.value.length - 1];
+
+  // // Логирование для отладки
+  // console.log("Undo to state:", previousState.svgData[0].path);
+
+  pathStrings.value = previousState.svgData;
+  rasterFramesData.value[props.currentFrame] = previousState.canvasData;
+  svgFramesData[props.currentFrame] = previousState.svgData;
+
+  loadSvgAndVectorData();
+};
+
 const rasterize = () => {
   return new Promise<void>((resolve, reject) => {
     const svgElement = svgRef.value;
@@ -196,25 +217,17 @@ const rasterize = () => {
   });
 };
 
-watch(
-  () => props.isErase,
-  (val) => (eraserEnabled.value = val)
-);
-
 const erase = (x: number, y: number) => {
   const canvasElement = canvasRef.value;
   if (!canvasElement) return;
 
-  const ctx = canvasElement.getContext("2d");
   if (!ctx) return;
 
   ctx.clearRect(x, y, eraserSize.value, eraserSize.value);
-  saveSvgAndVectorData();
 };
 
 const handleCanvasMouseDown = (e: MouseEvent) => {
   if (!eraserEnabled.value) return;
-
   erase(e.offsetX, e.offsetY);
 };
 
@@ -232,6 +245,7 @@ const handleCanvasMouseUp = () => {
   const ctx = canvasElement.getContext("2d");
   if (!ctx) return;
   ctx.globalCompositeOperation = "source-over";
+  saveSvgAndVectorData();
 };
 
 const saveSvgAndVectorData = () => {
@@ -241,15 +255,18 @@ const saveSvgAndVectorData = () => {
   // TODO move to rasterize
 
   pathStrings.value = pathStrings.value.filter((path) => path.type != "draw");
+  // console.log(pathStrings.value);
+
   if (pathStrings.value.length > 0) {
     svgFramesData[props.currentFrame] = [...pathStrings.value];
   }
+
   if (canvasRef.value) {
     const dataURL = canvasRef.value.toDataURL("image/png");
-
     rasterFramesData.value[props.currentFrame] = dataURL;
     // console.log(dataURL);
   }
+
   const framesWithData = Array.from(
     new Set(
       [
@@ -259,12 +276,27 @@ const saveSvgAndVectorData = () => {
     )
   );
 
-  console.log(framesWithData);
+  addACtionToStack();
 
   emits("update:framesWithData", framesWithData);
 };
 
+const addACtionToStack = () => {
+  if (canvasRef.value) {
+    historyStack.value.push({
+      canvasData: canvasRef.value.toDataURL("image/png"),
+      svgData: JSON.parse(JSON.stringify([...pathStrings.value])), // глубокое копирование
+    });
+
+    // Длинна стека
+    if (historyStack.value.length > 10) {
+      historyStack.value.shift(); // Удаление самого старого состояния, если стек превышает 4 элемента
+    }
+  }
+};
+
 const loadSvgAndVectorData = () => {
+  pathStrings.value = pathStrings.value.filter((path) => path.type != "draw");
   const svgData = svgFramesData[props.currentFrame];
   if (svgData) {
     pathStrings.value.length = 0;
@@ -288,9 +320,6 @@ const loadSvgAndVectorData = () => {
     const img = new Image();
     img.onload = () => {
       if (ctx) {
-        // console.log("ctx");
-        // console.log(img);
-        // ctx.clearRect(0, 0, canvasElement.width, canvasElement.height); // Очищаем холст перед отрисовкой нового изображения
         ctx.drawImage(img, 0, 0);
       }
     };
@@ -313,7 +342,12 @@ watch(
   () => props.currentFrame,
   () => {
     loadSvgAndVectorData();
+    historyStack.value.length = 0;
   }
+);
+watch(
+  () => props.isErase,
+  (val) => (eraserEnabled.value = val)
 );
 
 const handleDeleteClick = () => {
@@ -371,13 +405,12 @@ const handleMouseDown = (e: MouseEvent) => {
     strokeWidths.push(selectedStrokeWidth.value);
     colors.push(selectedColor.value);
   } else if (props.mode === "move") {
-    console.log("vv");
-
     isMoving = true;
     selectedPathIndex.value = hoveredPathIndex.value;
     initialX = e.offsetX;
     initialY = e.offsetY;
   }
+  // saveSvgAndVectorData();
 };
 const handleMouseMove = (e: MouseEvent) => {
   if (props.mode === "draw" && isDrawing && lastX !== null && lastY !== null) {
@@ -427,7 +460,7 @@ const handleMouseMove = (e: MouseEvent) => {
     isMoving &&
     selectedPathIndex.value !== null
   ) {
-    console.log(props.mode);
+    // console.log(props.mode);
 
     deltaX = e.offsetX - initialX;
     deltaY = e.offsetY - initialY;
@@ -463,14 +496,14 @@ const clearCanvas = () => {
   saveSvgAndVectorData();
 };
 
-const undoLastPath = () => {
-  if (pathStrings.value.length > 0) {
-    pathStrings.value.pop();
-    colors.pop();
-    strokeWidths.pop();
-    saveSvgAndVectorData(); // Update the SVG data after removing the last path
-  }
-};
+// const undoLastPath = () => {
+//   if (pathStrings.value.length > 0) {
+//     pathStrings.value.pop();
+//     colors.pop();
+//     strokeWidths.pop();
+//     saveSvgAndVectorData(); // Update the SVG data after removing the last path
+//   }
+// };
 
 const ramerDouglasPeucker = (points: Point[], epsilon: number): Point[] => {
   let dmax = 0;
