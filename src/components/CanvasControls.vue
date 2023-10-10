@@ -15,6 +15,16 @@
       v-model="selectedColor"
       @change="emit('colorChange', selectedColor)"
     />
+    <select
+      @change="emit('strokeWidthChange', selectedStrokeWidth)"
+      v-model="selectedStrokeWidth"
+    >
+      <option value="1">1px</option>
+      <option value="3">3px</option>
+      <option value="5">5px</option>
+      <option value="7">7px</option>
+      <option value="10">10px</option>
+    </select>
     <slot></slot>
     <!-- Слот для дополнительных элементов управления -->
   </div>
@@ -25,6 +35,7 @@ import { ref, defineProps, defineEmits } from "vue";
 
 // Состояние цвета
 const selectedColor = ref("#000000");
+const selectedStrokeWidth = ref("3");
 
 // Определение входных параметров (если нужны)
 defineProps([]);
@@ -40,6 +51,7 @@ const emit = defineEmits([
   "undo",
   "clear",
   "colorChange",
+  "strokeWidthChange",
 ]);
 </script>
 

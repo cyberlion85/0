@@ -12,7 +12,8 @@
         @undo="isUndo = true"
         @erase="isErase = !isErase"
         @clear="clear()"
-        @color-change="(color) => test(color)"
+        @color-change="(color) => (selectedColor = color)"
+        @stroke-width-change="(width) => (selectedStrokeWidth = width)"
       ></CanvasControls>
     </div>
     <draggableElement
@@ -44,6 +45,7 @@
           :is-erase="isErase"
           :is-undo="isUndo"
           :selected-color="selectedColor"
+          :selected-stroke-width="selectedStrokeWidth"
           @reset-undo-click="isUndo = false"
         />
         <DrawCanvas
@@ -83,13 +85,6 @@ import draggableElement from "./draggableElement.vue";
 import TimeLine from "./TimeLine.vue";
 import CanvasControls from "./CanvasControls.vue";
 
-const test = (a) => {
-  // console.log(a);
-
-  selectedColor.value = a;
-  // console.log(selectedColor);
-};
-
 const mode = ref<string>("draw");
 const isErase = ref(false);
 const isUndo = ref(false);
@@ -109,6 +104,7 @@ const isPrevFrame = ref(false);
 const framesWithSketch = ref([]);
 const selectedFrame = ref<number | null>(null);
 const selectedColor = ref("blue");
+const selectedStrokeWidth = ref("3");
 
 const filename = "/sample_movie.mp4";
 const videoHeight = 534;

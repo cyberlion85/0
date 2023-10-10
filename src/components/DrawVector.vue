@@ -28,7 +28,7 @@
           :d="pathString.path"
           :data-type="pathString.type"
           :stroke="pathString.color"
-          :stroke-width="strokeWidths[index] || selectedStrokeWidth"
+          :stroke-width="pathString.strokeWidth"
           fill="none"
           @mouseover="hoverPath(index)"
           @mouseout="unhoverPath"
@@ -91,6 +91,7 @@ const props = withDefaults(
     isErase: boolean;
     isUndo: boolean;
     selectedColor: string;
+    selectedStrokeWidth: string;
   }>(),
   { currentFrame: 0 }
 );
@@ -104,6 +105,7 @@ interface PathInfo {
   type: "draw" | "drawLine" | "drawArrow";
   path: string;
   color: string;
+  strokeWidth: number;
 }
 
 const emits = defineEmits(["update:framesWithData", "resetUndoClick"]);
@@ -131,9 +133,6 @@ const svgFramesData: Record<number, PathInfo[]> = {};
 const rasterFramesData = ref<Record<number, string>>({});
 let ctx: CanvasRenderingContext2D | null = null;
 
-let selectedStrokeWidth = ref(3); // Текущая выбранная толщина линии
-let strokeWidths: number[] = reactive([]); // Толщина для каждого пути
-
 const canvasRef = ref<HTMLCanvasElement | null>(null);
 const eraserEnabled = ref(false);
 const eraserSize = ref(10);
@@ -151,6 +150,12 @@ watch(
   (val) => {
     if (val) undo();
     emits("resetUndoClick");
+  }
+);
+watch(
+  () => props.selectedStrokeWidth,
+  (val) => {
+    console.log(val);
   }
 );
 watch(
@@ -347,7 +352,6 @@ const handleDeleteClick = () => {
   if (props.mode === "delete") {
     if (hoveredPathIndex.value !== null) {
       pathStrings.value.splice(hoveredPathIndex.value, 1);
-      strokeWidths.splice(hoveredPathIndex.value, 1);
       hoveredPathIndex.value = null;
       saveSvgAndVectorData();
     }
@@ -377,8 +381,8 @@ const handleMouseDown = (e: MouseEvent) => {
       type: "draw",
       path: `M${lastX} ${lastY}`,
       color: props.selectedColor,
+      strokeWidth: Number(props.selectedStrokeWidth),
     });
-    strokeWidths.push(selectedStrokeWidth.value);
     currentPath = [{ x: lastX, y: lastY }];
   } else if (props.mode === "drawLine") {
     isDrawing = true;
@@ -386,16 +390,16 @@ const handleMouseDown = (e: MouseEvent) => {
       type: "drawLine",
       path: `M${lastX} ${lastY}`,
       color: props.selectedColor,
+      strokeWidth: Number(props.selectedStrokeWidth),
     });
-    strokeWidths.push(selectedStrokeWidth.value);
   } else if (props.mode === "drawArrow") {
     isDrawing = true;
     pathStrings.value.push({
       type: "drawArrow",
       path: `M${lastX} ${lastY}`,
       color: props.selectedColor,
+      strokeWidth: Number(props.selectedStrokeWidth),
     });
-    strokeWidths.push(selectedStrokeWidth.value);
   } else if (props.mode === "move") {
     isMoving = true;
     selectedPathIndex.value = hoveredPathIndex.value;
@@ -413,7 +417,6 @@ const handleMouseMove = (e: MouseEvent) => {
 
     currentPath.push({ x: newX, y: newY });
 
-    // const currentPoint = { x: lastX, y: lastY };
     const currentPoint = { x: e.offsetX, y: e.offsetY };
 
     const smoothedPAth = smoothPath(
@@ -482,7 +485,6 @@ const hoverPath = (index: number) => {
 
 const clearScreen = () => {
   pathStrings.value.length = 0; // Clear all paths
-  strokeWidths.length = 0; // Clear all stroke widths
   if (ctx) clearArea(ctx);
   saveSvgAndVectorData();
 };
