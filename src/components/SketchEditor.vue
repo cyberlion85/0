@@ -64,8 +64,6 @@
     ></draggableElement>
 
     <div class="controls">
-      <!-- <button @click="isPlaying = true">Play</button> -->
-      <!-- <button @click="isPlaying = false">Stop</button> -->
       <button @click="isPrevFrame = true">Step Backward</button>
       <button @click="isNextFrame = true">Step Forward</button>
 
@@ -113,9 +111,9 @@ const selectedColor = ref("");
 const selectedStrokeWidth = ref("3");
 
 // Параметры сглаживания и упрощения
-const childSmoothingFactor = ref();
-const childAlphaFactor = ref();
-const childEpsilon = ref();
+const childSmoothingFactor = ref(NaN);
+const childAlphaFactor = ref(NaN);
+const childEpsilon = ref(NaN);
 
 const filename = "/sample_movie.mp4";
 const videoHeight = 534;

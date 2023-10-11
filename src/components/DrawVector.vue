@@ -183,7 +183,9 @@ watch(
 const undo = () => {
   // console.log("undo clicked");
 
-  if (historyStack.value.length <= 1) return;
+  if (historyStack.value.length <= 1) {
+    return;
+  }
 
   historyStack.value.pop();
 
