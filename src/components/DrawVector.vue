@@ -73,7 +73,6 @@
 <script setup lang="ts">
 import {
   ref,
-  reactive,
   withDefaults,
   defineProps,
   defineEmits,
@@ -92,6 +91,9 @@ const props = withDefaults(
     isUndo: boolean;
     selectedColor: string;
     selectedStrokeWidth: string;
+    smoothingFactor: number;
+    alphaFactor: number;
+    epsilon: number;
   }>(),
   { currentFrame: 0 }
 );
@@ -110,33 +112,41 @@ interface PathInfo {
 
 const emits = defineEmits(["update:framesWithData", "resetUndoClick"]);
 
+// 1. Референсы и контексты
+const svgRef = ref<SVGSVGElement | null>(null);
+const canvasRef = ref<HTMLCanvasElement | null>(null);
+let ctx: CanvasRenderingContext2D | null = null;
+
+// 2. Настройки и состояния инструментов рисования
 let isDrawing = false;
 let isMoving = false;
+let lastX: number | null = null;
+let lastY: number | null = null;
+const eraserEnabled = ref(false);
+
+// 3. Параметры рисования и ластика
+const eraserSize = ref(10);
+// const smoothingFactor = ref(0.3);
+// const alphaFactor = ref(0.3);
+// const epsilon = ref(0.3);
+
+// 4. Данные о путях и координатах
 let currentPath: Point[] = [];
 let simplifiedPathRes = ref();
 let simplifiedLenth = ref(0);
 let pathStrings = ref<PathInfo[]>([]);
+const svgFramesData: Record<number, PathInfo[]> = {};
+const rasterFramesData = ref<Record<number, string>>({});
+
+// 5. Индексы и координаты
 let selectedPathIndex = ref<number | null>(null); // Make it reactive
 let hoveredPathIndex = ref<number | null>(null);
-let lastX: number | null = null;
-let lastY: number | null = null;
 let initialX = 0;
 let initialY = 0;
 let deltaX = 0;
 let deltaY = 0;
-const smoothingFactor = ref(0.3);
-const alphaFactor = ref(0.3);
-const epsilon = ref(0.3);
 
-const svgRef = ref<SVGSVGElement | null>(null);
-const svgFramesData: Record<number, PathInfo[]> = {};
-const rasterFramesData = ref<Record<number, string>>({});
-let ctx: CanvasRenderingContext2D | null = null;
-
-const canvasRef = ref<HTMLCanvasElement | null>(null);
-const eraserEnabled = ref(false);
-const eraserSize = ref(10);
-
+// 6. История и стек
 const historyStack = ref<{ canvasData: string; svgData: PathInfo[] }[]>([]);
 
 onMounted(() => {
@@ -409,8 +419,8 @@ const handleMouseDown = (e: MouseEvent) => {
 };
 const handleMouseMove = (e: MouseEvent) => {
   if (props.mode === "draw" && isDrawing && lastX !== null && lastY !== null) {
-    const newX = lastX + (e.offsetX - lastX) * smoothingFactor.value;
-    const newY = lastY + (e.offsetY - lastY) * smoothingFactor.value;
+    const newX = lastX + (e.offsetX - lastX) * props.smoothingFactor;
+    const newY = lastY + (e.offsetY - lastY) * props.smoothingFactor;
 
     lastX = newX;
     lastY = newY;
@@ -421,10 +431,10 @@ const handleMouseMove = (e: MouseEvent) => {
 
     const smoothedPAth = smoothPath(
       currentPath,
-      alphaFactor.value,
+      props.alphaFactor,
       currentPoint
     ); // Передаем текущую точку чтобы убрать отставание мышки
-    const simplifiedPath = ramerDouglasPeucker(smoothedPAth, epsilon.value);
+    const simplifiedPath = ramerDouglasPeucker(smoothedPAth, props.epsilon);
     simplifiedLenth.value = simplifiedPath.length;
 
     if (simplifiedPath.length) simplifiedPathRes.value = simplifiedPath.length;

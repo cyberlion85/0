@@ -14,6 +14,9 @@
         @clear="clear()"
         @color-change="(color) => (selectedColor = color)"
         @stroke-width-change="(width) => (selectedStrokeWidth = width)"
+        @smoothing-factor-change="(evt) => (childSmoothingFactor = evt)"
+        @alpha-factor-change="(evt) => (childAlphaFactor = evt)"
+        @epsilon-change="(evt) => (childEpsilon = evt)"
       ></CanvasControls>
     </div>
     <draggableElement
@@ -46,6 +49,9 @@
           :is-undo="isUndo"
           :selected-color="selectedColor"
           :selected-stroke-width="selectedStrokeWidth"
+          :alpha-factor="childAlphaFactor"
+          :smoothing-factor="childSmoothingFactor"
+          :epsilon="childEpsilon"
           @reset-undo-click="isUndo = false"
         />
         <DrawCanvas
@@ -105,6 +111,11 @@ const framesWithSketch = ref([]);
 const selectedFrame = ref<number | null>(null);
 const selectedColor = ref("blue");
 const selectedStrokeWidth = ref("3");
+
+// Параметры сглаживания и упрощения
+const childSmoothingFactor = ref();
+const childAlphaFactor = ref();
+const childEpsilon = ref();
 
 const filename = "/sample_movie.mp4";
 const videoHeight = 534;
