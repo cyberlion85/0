@@ -72,7 +72,7 @@
 import { ref, defineProps, defineEmits, onMounted } from "vue";
 
 // Состояние цвета
-const selectedColor = ref("#000000");
+const selectedColor = ref("#f6b73c");
 const selectedStrokeWidth = ref("3");
 
 // Параметры сглаживания и упрощения
@@ -104,6 +104,7 @@ onMounted(() => {
   emit("epsilonChange", epsilon.value);
   emit("smoothingFactorChange", smoothingFactor.value);
   emit("alphaFactorChange", alphaFactor.value);
+  emit("colorChange", selectedColor.value);
 });
 </script>
 

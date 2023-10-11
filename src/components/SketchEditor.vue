@@ -109,7 +109,7 @@ const isNextFrame = ref(false);
 const isPrevFrame = ref(false);
 const framesWithSketch = ref([]);
 const selectedFrame = ref<number | null>(null);
-const selectedColor = ref("blue");
+const selectedColor = ref("");
 const selectedStrokeWidth = ref("3");
 
 // Параметры сглаживания и упрощения
