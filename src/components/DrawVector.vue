@@ -1,5 +1,9 @@
 <template>
-  <div id="svg_container" style="position: relative">
+  <div
+    :class="{ 'drawing-cursor': mode === 'draw' }"
+    id="svg_container"
+    style="position: relative"
+  >
     <div>
       <svg
         ref="svgRef"
@@ -626,5 +630,8 @@ defineExpose({
 .highlight-delete {
   stroke: red;
   cursor: pointer;
+}
+.drawing-cursor {
+  cursor: url("../../cursors/pencil.cur") 10 10, auto;
 }
 </style>
