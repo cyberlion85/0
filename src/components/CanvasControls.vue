@@ -11,7 +11,7 @@
         min="0.1"
         max="1"
         step="0.1"
-        @input="emit('smoothingFactorChange', smoothingFactor)"
+        @input="emit('smoothingFactorChange', Number(smoothingFactor))"
       />
 
       <label for="alphaFactor">Alpha Factor Func: {{ alphaFactor }}</label>
@@ -22,7 +22,7 @@
         min="0.1"
         max="1"
         step="0.1"
-        @input="emit('alphaFactorChange', alphaFactor)"
+        @input="emit('alphaFactorChange', Number(alphaFactor))"
       />
 
       <label for="epsilon">Epsilon: {{ epsilon }}</label>
@@ -33,8 +33,17 @@
         min="0"
         max="1"
         step="0.1"
-        @input="emit('epsilonChange', epsilon)"
+        @input="emit('epsilonChange', Number(epsilon))"
       />
+      <!-- <label for="eraserSize">Eraser Size: {{ eraserSize }}</label>
+      <input
+        type="range"
+        id="eraserSize"
+        v-model="eraserSize"
+        min="5"
+        max="50"
+        @input="updateEraserCursor"
+      /> -->
     </div>
     <div class="control-buttons">
       <button

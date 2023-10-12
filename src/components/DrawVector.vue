@@ -1,6 +1,7 @@
 <template>
+  <!-- :class="{ 'drawing-cursor': mode === 'draw' }" -->
   <div
-    :class="{ 'drawing-cursor': mode === 'draw' }"
+    :style="{ cursor: eraserCursor }"
     id="svg_container"
     style="position: relative"
   >
@@ -129,10 +130,22 @@ let lastY: number | null = null;
 const eraserEnabled = ref(false);
 
 // 3. Параметры рисования и ластика
-const eraserSize = ref(10);
-// const smoothingFactor = ref(0.3);
-// const alphaFactor = ref(0.3);
-// const epsilon = ref(0.3);
+const eraserSize = ref(100);
+const eraserCursor = ref(""); // курсор ластика
+
+const updateEraserCursor = () => {
+  const svg = `<svg width="${eraserSize.value}" height="${
+    eraserSize.value
+  }" version="1.1" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="${eraserSize.value / 2}" cy="${eraserSize.value / 2}" r="${
+    eraserSize.value / 2
+  }" fill="rgba(255, 255, 255, 0.5)" stroke="black" stroke-width="1" />
+  </svg>`;
+  eraserCursor.value = `url("data:image/svg+xml;utf8,${encodeURIComponent(
+    svg
+  )}") ${eraserSize.value / 2} ${eraserSize.value / 2}, auto`;
+  console.log(eraserCursor.value);
+};
 
 // 4. Данные о путях и координатах
 let currentPath: Point[] = [];
@@ -157,6 +170,11 @@ onMounted(() => {
   if (canvasRef.value) {
     ctx = canvasRef.value.getContext("2d");
   }
+  updateEraserCursor();
+});
+
+watch(eraserSize, () => {
+  updateEraserCursor();
 });
 
 watch(
@@ -604,6 +622,7 @@ const generateArrowString = (
 const unhoverPath = () => {
   hoveredPathIndex.value = null;
 };
+
 defineExpose({
   saveSvgAndVectorData,
   loadSvgAndVectorData,
@@ -632,6 +651,7 @@ defineExpose({
   cursor: pointer;
 }
 .drawing-cursor {
-  cursor: url("../../cursors/pencil.cur") 10 10, auto;
+  cursor: crosshair;
+  /* cursor: url("../../cursors/pencil.cur") 10 10, auto; */
 }
 </style>
