@@ -1,7 +1,6 @@
 <template>
-  <!-- :class="{ 'drawing-cursor': mode === 'draw' }" -->
   <div
-    :style="{ cursor: eraserCursor }"
+    :style="{ cursor: cursorComp }"
     id="svg_container"
     style="position: relative"
   >
@@ -84,6 +83,7 @@ import {
   defineExpose,
   watch,
   onMounted,
+  computed,
 } from "vue";
 
 const props = withDefaults(
@@ -92,7 +92,7 @@ const props = withDefaults(
     videoHeight: number;
     videoWidth: number;
     mode: string;
-    isErase: boolean;
+    // isErase: boolean;
     isUndo: boolean;
     selectedColor: string;
     selectedStrokeWidth: string;
@@ -132,20 +132,6 @@ const eraserEnabled = ref(false);
 
 // 3. Параметры рисования и ластика
 const eraserCursor = ref(""); // курсор ластика
-
-const updateEraserCursor = () => {
-  const svg = `<svg width="${props.eraserSize}" height="${
-    props.eraserSize
-  }" version="1.1" xmlns="http://www.w3.org/2000/svg">
-    <circle cx="${props.eraserSize / 2}" cy="${props.eraserSize / 2}" r="${
-    props.eraserSize / 2
-  }" fill="rgba(255, 255, 255, 0.5)" stroke="black" stroke-width="1" />
-  </svg>`;
-  eraserCursor.value = `url("data:image/svg+xml;utf8,${encodeURIComponent(
-    svg
-  )}") ${props.eraserSize / 2} ${props.eraserSize / 2}, auto`;
-  console.log(eraserCursor.value);
-};
 
 // 4. Данные о путях и координатах
 let currentPath: Point[] = [];
@@ -201,9 +187,46 @@ watch(
   }
 );
 watch(
-  () => props.isErase,
-  (val) => (eraserEnabled.value = val)
+  () => props.mode,
+  (val) => {
+    console.log(val);
+
+    if (val == "erase") {
+      eraserEnabled.value = true;
+    } else {
+      eraserEnabled.value = false;
+    }
+  }
 );
+
+const cursorComp = computed(() => {
+  if (eraserEnabled.value) {
+    return eraserCursor.value;
+  }
+
+  switch (props.mode) {
+    case "draw":
+      return "crosshair";
+    case "move":
+      return "move";
+    case "delete":
+      return "not-allowed";
+    default:
+      return "default";
+  }
+});
+const updateEraserCursor = () => {
+  const svg = `<svg width="${props.eraserSize}" height="${
+    props.eraserSize
+  }" version="1.1" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="${props.eraserSize / 2}" cy="${props.eraserSize / 2}" r="${
+    props.eraserSize / 2
+  }" fill="rgba(255, 255, 255, 0.5)" stroke="black" stroke-width="1" />
+  </svg>`;
+  eraserCursor.value = `url("data:image/svg+xml;utf8,${encodeURIComponent(
+    svg
+  )}") ${props.eraserSize / 2} ${props.eraserSize / 2}, auto`;
+};
 
 const undo = () => {
   // console.log("undo clicked");
@@ -639,13 +662,13 @@ defineExpose({
 
 <style scoped>
 .svg-canvas {
-  border: 5px solid red;
+  /* border: 5px solid red; */
   opacity: 0.4;
   position: absolute;
   z-index: 1;
 }
 .canvas-el {
-  border: 5px dotted blue;
+  /* border: 5px dotted blue; */
   position: absolute;
   /* z-index: 0; */
 }
@@ -656,9 +679,5 @@ defineExpose({
 .highlight-delete {
   stroke: red;
   cursor: pointer;
-}
-.drawing-cursor {
-  cursor: crosshair;
-  /* cursor: url("../../cursors/pencil.cur") 10 10, auto; */
 }
 </style>

@@ -65,7 +65,11 @@
         Arrow
       </button>
       <button
-        @click="activateButton('erase')"
+        @click="
+          activeButton === 'erase'
+            ? activateButton('draw')
+            : activateButton('erase')
+        "
         :class="{ active: activeButton === 'erase' }"
       >
         Erase
@@ -120,7 +124,7 @@ const smoothingFactor = ref(0.5);
 const alphaFactor = ref(0.5);
 const epsilon = ref(0.1);
 
-const eraserSize = ref(50);
+const eraserSize = ref(25);
 
 const activateButton = (
   buttonName: "draw" | "drawLine" | "drawArrow" | "erase" | "move" | "delete"
@@ -152,6 +156,7 @@ onMounted(() => {
   emit("smoothingFactorChange", smoothingFactor.value);
   emit("alphaFactorChange", alphaFactor.value);
   emit("colorChange", selectedColor.value);
+  emit("eraserSizeChange", eraserSize.value);
 });
 </script>
 

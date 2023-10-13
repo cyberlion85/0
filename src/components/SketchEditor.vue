@@ -7,10 +7,10 @@
         @draw="mode = 'draw'"
         @draw-line="mode = 'drawLine'"
         @draw-arrow="mode = 'drawArrow'"
+        @erase="mode = 'erase'"
         @move="mode = 'move'"
         @delete="mode = 'delete'"
         @undo="isUndo = true"
-        @erase="isErase = !isErase"
         @clear="clear()"
         @color-change="(color) => (selectedColor = color)"
         @stroke-width-change="(width) => (selectedStrokeWidth = width)"
@@ -37,6 +37,8 @@
           class="player"
           :src="filename"
         />
+        <!-- :is-erase="isErase" -->
+
         <DrawVector
           v-if="isVector"
           @update:frames-with-data="(data) => (framesWithSketch = data)"
@@ -46,7 +48,6 @@
           :video-height="videoHeight"
           :video-width="videoWidth"
           :mode="mode"
-          :is-erase="isErase"
           :is-undo="isUndo"
           :selected-color="selectedColor"
           :selected-stroke-width="selectedStrokeWidth"
@@ -92,7 +93,7 @@ import TimeLine from "./TimeLine.vue";
 import CanvasControls from "./CanvasControls.vue";
 
 const mode = ref<string>("draw");
-const isErase = ref(false);
+// const isErase = ref(false);
 const isUndo = ref(false);
 
 const videoPlayerRef = ref(null);
@@ -117,7 +118,7 @@ const childSmoothingFactor = ref(NaN);
 const childAlphaFactor = ref(NaN);
 const childEpsilon = ref(NaN);
 // Параметры ластика
-const childEaserSize = ref(50);
+const childEaserSize = ref(NaN);
 
 const filename = "/sample_movie.mp4";
 const videoHeight = 534;
