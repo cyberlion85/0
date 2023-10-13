@@ -99,6 +99,7 @@ const props = withDefaults(
     smoothingFactor: number;
     alphaFactor: number;
     epsilon: number;
+    eraserSize: number;
   }>(),
   { currentFrame: 0 }
 );
@@ -117,7 +118,7 @@ interface PathInfo {
 
 const emits = defineEmits(["update:framesWithData", "resetUndoClick"]);
 
-// 1. Референсы и контексты
+// 1. Референсы и контекстыprops.eraserSize
 const svgRef = ref<SVGSVGElement | null>(null);
 const canvasRef = ref<HTMLCanvasElement | null>(null);
 let ctx: CanvasRenderingContext2D | null = null;
@@ -130,20 +131,19 @@ let lastY: number | null = null;
 const eraserEnabled = ref(false);
 
 // 3. Параметры рисования и ластика
-const eraserSize = ref(100);
 const eraserCursor = ref(""); // курсор ластика
 
 const updateEraserCursor = () => {
-  const svg = `<svg width="${eraserSize.value}" height="${
-    eraserSize.value
+  const svg = `<svg width="${props.eraserSize}" height="${
+    props.eraserSize
   }" version="1.1" xmlns="http://www.w3.org/2000/svg">
-    <circle cx="${eraserSize.value / 2}" cy="${eraserSize.value / 2}" r="${
-    eraserSize.value / 2
+    <circle cx="${props.eraserSize / 2}" cy="${props.eraserSize / 2}" r="${
+    props.eraserSize / 2
   }" fill="rgba(255, 255, 255, 0.5)" stroke="black" stroke-width="1" />
   </svg>`;
   eraserCursor.value = `url("data:image/svg+xml;utf8,${encodeURIComponent(
     svg
-  )}") ${eraserSize.value / 2} ${eraserSize.value / 2}, auto`;
+  )}") ${props.eraserSize / 2} ${props.eraserSize / 2}, auto`;
   console.log(eraserCursor.value);
 };
 
@@ -173,9 +173,12 @@ onMounted(() => {
   updateEraserCursor();
 });
 
-watch(eraserSize, () => {
-  updateEraserCursor();
-});
+watch(
+  () => props.eraserSize,
+  () => {
+    updateEraserCursor();
+  }
+);
 
 watch(
   () => props.isUndo,
@@ -271,7 +274,11 @@ const erase = (x: number, y: number) => {
 
   if (!ctx) return;
 
-  ctx.clearRect(x, y, eraserSize.value, eraserSize.value);
+  ctx.globalCompositeOperation = "destination-out";
+  ctx.beginPath();
+  ctx.arc(x, y, props.eraserSize / 2, 0, Math.PI * 2, true);
+  ctx.fill();
+  ctx.globalCompositeOperation = "source-over";
 };
 
 const handleCanvasMouseDown = (e: MouseEvent) => {

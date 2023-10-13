@@ -17,6 +17,7 @@
         @smoothing-factor-change="(evt) => (childSmoothingFactor = evt)"
         @alpha-factor-change="(evt) => (childAlphaFactor = evt)"
         @epsilon-change="(evt) => (childEpsilon = evt)"
+        @eraser-size-change="(evt) => (childEaserSize = evt)"
       ></CanvasControls>
     </div>
     <draggableElement
@@ -52,6 +53,7 @@
           :alpha-factor="childAlphaFactor"
           :smoothing-factor="childSmoothingFactor"
           :epsilon="childEpsilon"
+          :eraser-size="childEaserSize"
           @reset-undo-click="isUndo = false"
         />
         <DrawCanvas
@@ -114,6 +116,8 @@ const selectedStrokeWidth = ref("3");
 const childSmoothingFactor = ref(NaN);
 const childAlphaFactor = ref(NaN);
 const childEpsilon = ref(NaN);
+// Параметры ластика
+const childEaserSize = ref(50);
 
 const filename = "/sample_movie.mp4";
 const videoHeight = 534;

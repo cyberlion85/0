@@ -35,15 +35,15 @@
         step="0.1"
         @input="emit('epsilonChange', Number(epsilon))"
       />
-      <!-- <label for="eraserSize">Eraser Size: {{ eraserSize }}</label>
+      <label for="eraserSize">Eraser Size: {{ eraserSize }}</label>
       <input
         type="range"
         id="eraserSize"
         v-model="eraserSize"
         min="5"
         max="50"
-        @input="updateEraserCursor"
-      /> -->
+        @input="emit('eraserSizeChange', Number(eraserSize))"
+      />
     </div>
     <div class="control-buttons">
       <button
@@ -120,6 +120,8 @@ const smoothingFactor = ref(0.5);
 const alphaFactor = ref(0.5);
 const epsilon = ref(0.1);
 
+const eraserSize = ref(50);
+
 const activateButton = (
   buttonName: "draw" | "drawLine" | "drawArrow" | "erase" | "move" | "delete"
 ) => {
@@ -142,6 +144,7 @@ const emit = defineEmits([
   "smoothingFactorChange",
   "alphaFactorChange",
   "epsilonChange",
+  "eraserSizeChange",
 ]);
 
 onMounted(() => {
