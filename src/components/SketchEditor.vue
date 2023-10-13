@@ -20,7 +20,7 @@
         @eraser-size-change="(evt) => (childEaserSize = evt)"
       ></CanvasControls>
     </div>
-    <draggableElement
+    <draggableElement @zoom-change="(zoom) => (zoomScale = zoom)"
       ><div
         class="video-draw-container"
         :style="{ height: videoHeight + 'px', width: videoWidth + 'px' }"
@@ -55,6 +55,7 @@
           :smoothing-factor="childSmoothingFactor"
           :epsilon="childEpsilon"
           :eraser-size="childEaserSize"
+          :zoom-scale="zoomScale"
           @reset-undo-click="isUndo = false"
         />
         <DrawCanvas
@@ -119,6 +120,8 @@ const childAlphaFactor = ref(NaN);
 const childEpsilon = ref(NaN);
 // Параметры ластика
 const childEaserSize = ref(NaN);
+
+const zoomScale = ref(1);
 
 const filename = "/sample_movie.mp4";
 const videoHeight = 534;

@@ -100,6 +100,7 @@ const props = withDefaults(
     alphaFactor: number;
     epsilon: number;
     eraserSize: number;
+    zoomScale: number;
   }>(),
   { currentFrame: 0 }
 );
@@ -292,14 +293,13 @@ const rasterize = () => {
 };
 
 const erase = (x: number, y: number) => {
-  const canvasElement = canvasRef.value;
-  if (!canvasElement) return;
+  if (!canvasRef.value || !ctx || props.zoomScale <= 0) return;
 
-  if (!ctx) return;
+  const eraserRadius = props.eraserSize / (2 * props.zoomScale); // Учитываем масштабирование
 
   ctx.globalCompositeOperation = "destination-out";
   ctx.beginPath();
-  ctx.arc(x, y, props.eraserSize / 2, 0, Math.PI * 2, true);
+  ctx.arc(x, y, eraserRadius, 0, Math.PI * 2, true);
   ctx.fill();
   ctx.globalCompositeOperation = "source-over";
 };

@@ -14,7 +14,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, defineEmits } from "vue";
 
 const draggableContainer = ref<HTMLElement | null>(null);
 const divMain = ref<HTMLElement | null>(null);
@@ -24,6 +24,8 @@ const max_scale = 4;
 let previousX: number, previousY: number;
 let offsetX = 0;
 let offsetY = 0;
+
+const emits = defineEmits(["zoomChange"]);
 
 const onMouseDown = (event: MouseEvent) => {
   if (draggableContainer.value) {
@@ -63,6 +65,9 @@ const onWheel = (e: WheelEvent) => {
 
   scale -= delta * factor * scale;
   scale = Math.max(1, Math.min(max_scale, scale));
+
+  // console.log(scale);
+  emits("zoomChange", scale);
 
   if (divMain.value) {
     const x = e.pageX - divMain.value.getBoundingClientRect().left;
