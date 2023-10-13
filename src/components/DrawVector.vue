@@ -97,7 +97,6 @@ const props = withDefaults(
     selectedColor: string;
     selectedStrokeWidth: string;
     smoothingFactor: number;
-    alphaFactor: number;
     epsilon: number;
     eraserSize: number;
     zoomScale: number;
@@ -486,7 +485,7 @@ const handleMouseMove = (e: MouseEvent) => {
 
     const smoothedPAth = smoothPath(
       currentPath,
-      props.alphaFactor,
+      props.smoothingFactor,
       currentPoint
     ); // Передаем текущую точку чтобы убрать отставание мышки
     const simplifiedPath = ramerDouglasPeucker(smoothedPAth, props.epsilon);

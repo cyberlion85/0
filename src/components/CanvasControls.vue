@@ -14,18 +14,7 @@
         @input="emit('smoothingFactorChange', Number(smoothingFactor))"
       />
 
-      <label for="alphaFactor">Alpha Factor Func: {{ alphaFactor }}</label>
-      <input
-        type="range"
-        id="alphaFactor"
-        v-model="alphaFactor"
-        min="0.1"
-        max="1"
-        step="0.1"
-        @input="emit('alphaFactorChange', Number(alphaFactor))"
-      />
-
-      <label for="epsilon">Epsilon: {{ epsilon }}</label>
+      <label for="epsilon">Simplification: {{ epsilon }}</label>
       <input
         type="range"
         id="epsilon"
@@ -121,7 +110,6 @@ const activeButton = ref("");
 
 // Параметры сглаживания и упрощения
 const smoothingFactor = ref(0.5);
-const alphaFactor = ref(0.5);
 const epsilon = ref(0.1);
 
 const eraserSize = ref(25);
@@ -146,7 +134,6 @@ const emit = defineEmits([
   "colorChange",
   "strokeWidthChange",
   "smoothingFactorChange",
-  "alphaFactorChange",
   "epsilonChange",
   "eraserSizeChange",
 ]);
@@ -154,7 +141,6 @@ const emit = defineEmits([
 onMounted(() => {
   emit("epsilonChange", epsilon.value);
   emit("smoothingFactorChange", smoothingFactor.value);
-  emit("alphaFactorChange", alphaFactor.value);
   emit("colorChange", selectedColor.value);
   emit("eraserSizeChange", eraserSize.value);
 });

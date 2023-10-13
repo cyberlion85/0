@@ -15,7 +15,6 @@
         @color-change="(color) => (selectedColor = color)"
         @stroke-width-change="(width) => (selectedStrokeWidth = width)"
         @smoothing-factor-change="(evt) => (childSmoothingFactor = evt)"
-        @alpha-factor-change="(evt) => (childAlphaFactor = evt)"
         @epsilon-change="(evt) => (childEpsilon = evt)"
         @eraser-size-change="(evt) => (childEaserSize = evt)"
       ></CanvasControls>
@@ -51,7 +50,6 @@
           :is-undo="isUndo"
           :selected-color="selectedColor"
           :selected-stroke-width="selectedStrokeWidth"
-          :alpha-factor="childAlphaFactor"
           :smoothing-factor="childSmoothingFactor"
           :epsilon="childEpsilon"
           :eraser-size="childEaserSize"
@@ -116,7 +114,6 @@ const selectedStrokeWidth = ref("3");
 
 // Параметры сглаживания и упрощения
 const childSmoothingFactor = ref(NaN);
-const childAlphaFactor = ref(NaN);
 const childEpsilon = ref(NaN);
 // Параметры ластика
 const childEaserSize = ref(NaN);
