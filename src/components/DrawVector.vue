@@ -119,7 +119,7 @@ interface PathInfo {
 
 const emits = defineEmits(["update:framesWithData", "resetUndoClick"]);
 
-// 1. Референсы и контекстыprops.eraserSize
+// 1. Референсы и контекст
 const svgRef = ref<SVGSVGElement | null>(null);
 const canvasRef = ref<HTMLCanvasElement | null>(null);
 let ctx: CanvasRenderingContext2D | null = null;
@@ -152,6 +152,7 @@ let deltaY = 0;
 
 // 6. История и стек
 const historyStack = ref<{ canvasData: string; svgData: PathInfo[] }[]>([]);
+let framesWithData: number[] = [];
 
 onMounted(() => {
   if (canvasRef.value) {
@@ -345,7 +346,7 @@ const saveSvgAndVectorData = () => {
     // console.log(dataURL);
   }
 
-  const framesWithData = Array.from(
+  framesWithData = Array.from(
     new Set(
       [
         Object.keys(svgFramesData).map(Number),
@@ -551,6 +552,13 @@ const clearScreen = () => {
   pathStrings.value.length = 0; // Clear all paths
   if (ctx) clearArea(ctx);
   saveSvgAndVectorData();
+  framesWithData = framesWithData.filter(
+    (frameNum) => frameNum != props.currentFrame
+  );
+  delete rasterFramesData.value[props.currentFrame];
+  delete svgFramesData[props.currentFrame];
+
+  emits("update:framesWithData", framesWithData);
 };
 
 const ramerDouglasPeucker = (points: Point[], epsilon: number): Point[] => {
