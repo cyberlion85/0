@@ -1,9 +1,6 @@
 <template>
   <div class="timeline-container">
     <!-- Кнопка Play -->
-    <!-- <div>1</div>
-    <div>2</div>
-    <div></div> -->
 
     <div @click="emits('clickedPlay')" class="play-button">
       {{ isPlaying ? "stop" : "play" }}
@@ -92,7 +89,7 @@ const selectFrame = (frame: number) => {
   display: flex;
   justify-content: center;
   align-items: center;
-  border: 3px solid rgb(64, 239, 6);
+  /* border: 3px solid rgb(64, 239, 6); */
   height: 35px;
   min-width: 70px;
   background-color: rgb(65, 65, 65);
@@ -107,7 +104,7 @@ const selectFrame = (frame: number) => {
   height: 35px;
   min-width: 70px;
   background-color: rgb(65, 65, 65);
-  color: white;
+  color: rgb(90, 211, 236);
   font-size: 16px;
 }
 
@@ -141,7 +138,7 @@ const selectFrame = (frame: number) => {
 }
 
 .current-frame {
-  background-color: rgb(255, 255, 0);
+  background-color: rgb(90, 211, 236);
 }
 .sketch-frame {
   background-color: rgb(10, 250, 6);
@@ -152,6 +149,6 @@ const selectFrame = (frame: number) => {
   top: -20px;
   left: 50%;
   transform: translateX(-50%);
-  color: rgb(3, 128, 1);
+  color: rgb(90, 211, 236);
 }
 </style>

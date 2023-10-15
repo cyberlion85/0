@@ -1,78 +1,72 @@
 <template>
   <div>
-    <div>
-      <div class="video-draw">
-        <CanvasControls
-          class="canvas-controls"
-          @draw="mode = 'draw'"
-          @draw-line="mode = 'drawLine'"
-          @draw-arrow="mode = 'drawArrow'"
-          @erase="mode = 'erase'"
-          @move="mode = 'move'"
-          @delete="mode = 'delete'"
-          @undo="isUndo = true"
-          @clear="clear()"
-          @color-change="(color) => (selectedColor = color)"
-          @stroke-width-change="(width) => (selectedStrokeWidth = width)"
-          @smoothing-factor-change="(evt) => (childSmoothingFactor = evt)"
-          @epsilon-change="(evt) => (childEpsilon = evt)"
-          @eraser-size-change="(evt) => (childEaserSize = evt)"
-        ></CanvasControls>
+    <div class="video-draw">
+      <CanvasControls
+        class="canvas-controls"
+        @draw="mode = 'draw'"
+        @draw-line="mode = 'drawLine'"
+        @draw-arrow="mode = 'drawArrow'"
+        @erase="mode = 'erase'"
+        @move="mode = 'move'"
+        @delete="mode = 'delete'"
+        @undo="isUndo = true"
+        @clear="clear()"
+        @color-change="(color) => (selectedColor = color)"
+        @stroke-width-change="(width) => (selectedStrokeWidth = width)"
+        @smoothing-factor-change="(evt) => (childSmoothingFactor = evt)"
+        @epsilon-change="(evt) => (childEpsilon = evt)"
+        @eraser-size-change="(evt) => (childEaserSize = evt)"
+      ></CanvasControls>
 
-        <draggableElement
-          class="dragable-element"
-          @zoom-change="(zoom) => (zoomScale = zoom)"
-          ><div
-            class="video-draw-container"
-            :style="{ height: videoHeight + 'px', width: videoWidth + 'px' }"
-          >
-            <VideoPlayer
-              ref="videoPlayerRef"
-              :next-frame="isNextFrame"
-              :prev-frame="isPrevFrame"
-              :startPlay="isPlaying"
-              :selected-frame="selectedFrame"
-              @total-frames="(total) => (totalFrames = total)"
-              @frame-stepped="(isNextFrame = false), (isPrevFrame = false)"
-              @current-frame="(frameNum) => (currentFrame = frameNum)"
-              class="player"
-              :src="filename"
-            />
+      <draggableElement
+        class="dragable-element"
+        @zoom-change="(zoom) => (zoomScale = zoom)"
+        ><div
+          class="video-draw-container"
+          :style="{ height: videoHeight + 'px', width: videoWidth + 'px' }"
+        >
+          <VideoPlayer
+            ref="videoPlayerRef"
+            :next-frame="isNextFrame"
+            :prev-frame="isPrevFrame"
+            :startPlay="isPlaying"
+            :selected-frame="selectedFrame"
+            @total-frames="(total) => (totalFrames = total)"
+            @frame-stepped="(isNextFrame = false), (isPrevFrame = false)"
+            @current-frame="(frameNum) => (currentFrame = frameNum)"
+            class="player"
+            :src="filename"
+          />
 
-            <DrawVector
-              v-if="isVector"
-              @update:frames-with-data="(data) => (framesWithSketch = data)"
-              :currentFrame="currentFrame"
-              ref="canvasRef"
-              class="canvas"
-              :video-height="videoHeight"
-              :video-width="videoWidth"
-              :mode="mode"
-              :is-undo="isUndo"
-              :selected-color="selectedColor"
-              :selected-stroke-width="selectedStrokeWidth"
-              :smoothing-factor="childSmoothingFactor"
-              :epsilon="childEpsilon"
-              :eraser-size="childEaserSize"
-              :zoom-scale="zoomScale"
-              @reset-undo-click="isUndo = false"
-            />
-            <DrawCanvas
-              v-if="!isVector"
-              @update:frame-to-image-data="(data) => (framesWithSketch = data)"
-              :currentFrame="currentFrame"
-              ref="canvasRef"
-              class="canvas"
-            /></div
-        ></draggableElement>
-      </div>
+          <DrawVector
+            v-if="isVector"
+            @update:frames-with-data="(data) => (framesWithSketch = data)"
+            :currentFrame="currentFrame"
+            ref="canvasRef"
+            class="canvas"
+            :video-height="videoHeight"
+            :video-width="videoWidth"
+            :mode="mode"
+            :is-undo="isUndo"
+            :selected-color="selectedColor"
+            :selected-stroke-width="selectedStrokeWidth"
+            :smoothing-factor="childSmoothingFactor"
+            :epsilon="childEpsilon"
+            :eraser-size="childEaserSize"
+            :zoom-scale="zoomScale"
+            @reset-undo-click="isUndo = false"
+          />
+          <DrawCanvas
+            v-if="!isVector"
+            @update:frame-to-image-data="(data) => (framesWithSketch = data)"
+            :currentFrame="currentFrame"
+            ref="canvasRef"
+            class="canvas"
+          /></div
+      ></draggableElement>
     </div>
 
     <div class="controls">
-      <button @click="isPrevFrame = true">Step Backward</button>
-      <button @click="isNextFrame = true">Step Forward</button>
-
-      <div>Текущий кадр: {{ currentFrame }}</div>
       <TimeLine
         @selected-frame="(frame) => (selectedFrame = frame)"
         @clicked-play="isPlaying = !isPlaying"
@@ -81,18 +75,44 @@
         :totalFrames="totalFrames"
         :isPlaying="isPlaying"
       />
+      <button @click="isPrevFrame = true">Step Backward</button>
+      <button @click="isNextFrame = true">Step Forward</button>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
+import { onBeforeUnmount, onMounted, ref } from "vue";
 import VideoPlayer from "./VideoPlayer.vue";
 import DrawCanvas from "./DrawCanvas.vue";
 import DrawVector from "./DrawVector.vue";
 import draggableElement from "./draggableElement.vue";
 import TimeLine from "./TimeLine.vue";
 import CanvasControls from "./CanvasControls.vue";
+
+// const test = (a: any) => {
+//   console.log(a);
+// };
+
+const onKeydown = (event: KeyboardEvent) => {
+  // console.log(event);
+
+  if (event.key === "ArrowLeft") {
+    isPrevFrame.value = true;
+  } else if (event.key === "ArrowRight") {
+    isNextFrame.value = true;
+  }
+};
+
+onMounted(() => {
+  window.addEventListener("keydown", onKeydown);
+});
+
+onBeforeUnmount(() => {
+  console.log("onBeforeUnmount");
+
+  window.removeEventListener("keydown", onKeydown);
+});
 
 const mode = ref<string>("draw");
 // const isErase = ref(false);
