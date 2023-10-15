@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div style="margin-top: 10px">
+    <div>
       <label for="smoothingFactor"
         >Smoothing Factor: {{ smoothingFactor }}</label
       >

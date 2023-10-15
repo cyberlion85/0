@@ -367,7 +367,7 @@ const addACtionToStack = () => {
     });
 
     // Длинна стека
-    if (historyStack.value.length > 10) {
+    if (historyStack.value.length > 50) {
       historyStack.value.shift(); // Удаление самого старого состояния, если стек превышает 4 элемента
     }
   }

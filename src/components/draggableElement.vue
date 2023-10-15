@@ -84,11 +84,11 @@ const onWheel = (e: WheelEvent) => {
 
 <style scoped>
 .container {
-  width: 80vw;
-  height: 80vh;
+  width: 1280px;
+  height: 534px;
   overflow: hidden;
   position: relative;
-  margin: auto;
+  /* margin: auto; */
 }
 
 .draggable-container {

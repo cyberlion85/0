@@ -1,84 +1,87 @@
 <template>
   <div>
     <div>
-      <!-- mode {{ mode }} -->
+      <div class="video-draw">
+        <CanvasControls
+          class="canvas-controls"
+          @draw="mode = 'draw'"
+          @draw-line="mode = 'drawLine'"
+          @draw-arrow="mode = 'drawArrow'"
+          @erase="mode = 'erase'"
+          @move="mode = 'move'"
+          @delete="mode = 'delete'"
+          @undo="isUndo = true"
+          @clear="clear()"
+          @color-change="(color) => (selectedColor = color)"
+          @stroke-width-change="(width) => (selectedStrokeWidth = width)"
+          @smoothing-factor-change="(evt) => (childSmoothingFactor = evt)"
+          @epsilon-change="(evt) => (childEpsilon = evt)"
+          @eraser-size-change="(evt) => (childEaserSize = evt)"
+        ></CanvasControls>
 
-      <CanvasControls
-        @draw="mode = 'draw'"
-        @draw-line="mode = 'drawLine'"
-        @draw-arrow="mode = 'drawArrow'"
-        @erase="mode = 'erase'"
-        @move="mode = 'move'"
-        @delete="mode = 'delete'"
-        @undo="isUndo = true"
-        @clear="clear()"
-        @color-change="(color) => (selectedColor = color)"
-        @stroke-width-change="(width) => (selectedStrokeWidth = width)"
-        @smoothing-factor-change="(evt) => (childSmoothingFactor = evt)"
-        @epsilon-change="(evt) => (childEpsilon = evt)"
-        @eraser-size-change="(evt) => (childEaserSize = evt)"
-      ></CanvasControls>
+        <draggableElement
+          class="dragable-element"
+          @zoom-change="(zoom) => (zoomScale = zoom)"
+          ><div
+            class="video-draw-container"
+            :style="{ height: videoHeight + 'px', width: videoWidth + 'px' }"
+          >
+            <VideoPlayer
+              ref="videoPlayerRef"
+              :next-frame="isNextFrame"
+              :prev-frame="isPrevFrame"
+              :startPlay="isPlaying"
+              :selected-frame="selectedFrame"
+              @total-frames="(total) => (totalFrames = total)"
+              @frame-stepped="(isNextFrame = false), (isPrevFrame = false)"
+              @current-frame="(frameNum) => (currentFrame = frameNum)"
+              class="player"
+              :src="filename"
+            />
+
+            <DrawVector
+              v-if="isVector"
+              @update:frames-with-data="(data) => (framesWithSketch = data)"
+              :currentFrame="currentFrame"
+              ref="canvasRef"
+              class="canvas"
+              :video-height="videoHeight"
+              :video-width="videoWidth"
+              :mode="mode"
+              :is-undo="isUndo"
+              :selected-color="selectedColor"
+              :selected-stroke-width="selectedStrokeWidth"
+              :smoothing-factor="childSmoothingFactor"
+              :epsilon="childEpsilon"
+              :eraser-size="childEaserSize"
+              :zoom-scale="zoomScale"
+              @reset-undo-click="isUndo = false"
+            />
+            <DrawCanvas
+              v-if="!isVector"
+              @update:frame-to-image-data="(data) => (framesWithSketch = data)"
+              :currentFrame="currentFrame"
+              ref="canvasRef"
+              class="canvas"
+            /></div
+        ></draggableElement>
+      </div>
     </div>
-    <draggableElement @zoom-change="(zoom) => (zoomScale = zoom)"
-      ><div
-        class="video-draw-container"
-        :style="{ height: videoHeight + 'px', width: videoWidth + 'px' }"
-      >
-        <VideoPlayer
-          ref="videoPlayerRef"
-          :next-frame="isNextFrame"
-          :prev-frame="isPrevFrame"
-          :startPlay="isPlaying"
-          :selected-frame="selectedFrame"
-          @total-frames="(total) => (totalFrames = total)"
-          @frame-stepped="(isNextFrame = false), (isPrevFrame = false)"
-          @current-frame="(frameNum) => (currentFrame = frameNum)"
-          class="player"
-          :src="filename"
-        />
-        <!-- :is-erase="isErase" -->
-
-        <DrawVector
-          v-if="isVector"
-          @update:frames-with-data="(data) => (framesWithSketch = data)"
-          :currentFrame="currentFrame"
-          ref="canvasRef"
-          class="canvas"
-          :video-height="videoHeight"
-          :video-width="videoWidth"
-          :mode="mode"
-          :is-undo="isUndo"
-          :selected-color="selectedColor"
-          :selected-stroke-width="selectedStrokeWidth"
-          :smoothing-factor="childSmoothingFactor"
-          :epsilon="childEpsilon"
-          :eraser-size="childEaserSize"
-          :zoom-scale="zoomScale"
-          @reset-undo-click="isUndo = false"
-        />
-        <DrawCanvas
-          v-if="!isVector"
-          @update:frame-to-image-data="(data) => (framesWithSketch = data)"
-          :currentFrame="currentFrame"
-          ref="canvasRef"
-          class="canvas"
-        /></div
-    ></draggableElement>
 
     <div class="controls">
       <button @click="isPrevFrame = true">Step Backward</button>
       <button @click="isNextFrame = true">Step Forward</button>
 
       <div>Текущий кадр: {{ currentFrame }}</div>
+      <TimeLine
+        @selected-frame="(frame) => (selectedFrame = frame)"
+        @clicked-play="isPlaying = !isPlaying"
+        :framesWithSketch="framesWithSketch"
+        :playingFrame="currentFrame"
+        :totalFrames="totalFrames"
+        :isPlaying="isPlaying"
+      />
     </div>
-    <TimeLine
-      @selected-frame="(frame) => (selectedFrame = frame)"
-      @clicked-play="isPlaying = !isPlaying"
-      :framesWithSketch="framesWithSketch"
-      :playingFrame="currentFrame"
-      :totalFrames="totalFrames"
-      :isPlaying="isPlaying"
-    />
   </div>
 </template>
 
@@ -132,10 +135,11 @@ const clear = () => {
 </script>
 
 <style scoped>
+.video-draw {
+  /* border: 5px solid red; */
+}
 .video-draw-container {
   position: relative;
-  /* width: 1366px;
-  height: 768px; */
   overflow: hidden;
   margin: auto;
 }
@@ -154,8 +158,12 @@ const clear = () => {
 .canvas {
   z-index: 2;
 }
+
 .controls {
-  /* border: 1px solid red; */
-  /* z-index: 2; */
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  z-index: 1;
 }
 </style>
